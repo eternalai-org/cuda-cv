@@ -6,7 +6,6 @@
 #include <functional.h>
 #include <kernels.cuh>
 
-
 void maxmulFloat(float *A, float *B, float *C, int m, int n, int k) {
 
     // Allocate device memory:

@@ -139,6 +139,12 @@ void batchNormalizeFixedLongLong(
     int h, int w, int c  // m, n, c 
 );
 
+void maxmulFloat(float *A, float *B, float *C, int m, int n, int k);
+void maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k) ;
+void maxmulLong(long *A, long *B, long *C, long m, long n, long k);
+void maxmulInt(int *A, int *B, int *C, int m, int n, int k);
+void maxmulDouble(double *A, double *B, double *C, int m, int n, int k);
+
 #if __cplusplus
 }
 #endif
