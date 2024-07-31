@@ -5,53 +5,6 @@
 #include <functional.h>
 #include <kernels.cuh>
 
-
-////////////////////// kernels ///////////////////////// 
-
-
-__global__ void conv2dImplFixedLongLong_kernel(
-    long long* inp, long long* kernel, long long* bias, long long* out, // data io
-    int kernel_size, int in_channel, int out_channel, // kernel properties
-    int in_w, int in_h, int out_w, int out_h, // spatial size of inp,
-    int padding, int stride_h, int stride_w // padding mode, one of 'valid': 0 or 'same': 1
-)
-{
-    int out_row = blockIdx.y * blockDim.y + threadIdx.y; 
-    int out_col = blockIdx.x * blockDim.x + threadIdx.x;
-    int out_c = blockIdx.z * blockDim.z + threadIdx.z;
-
-    if (out_row < out_h && out_col < out_w)
-    {
-        const int in_row_offset = out_row * stride_h;
-        const int in_col_offset = out_col * stride_w;
-        int kernel_offset = out_c;
-        
-        long long sum = bias[out_c];
-
-        for (int i = 0, in_row = in_row_offset * in_w
-            ; i < kernel_size
-            ; ++i, in_row += in_w
-        )
-        {
-            for (int j = 0, inp_offset = (in_row + in_col_offset) * in_channel
-                ; j < kernel_size
-                ; ++j, inp_offset += in_channel
-            )
-            {
-                for (int c = 0
-                    ; c < in_channel
-                    ; ++c, kernel_offset += out_channel
-                )
-                {
-                    sum += FixedLongLong::mul(inp[inp_offset + c], kernel[kernel_offset]);
-                }
-            }
-        }
-
-        out[(out_row * out_w + out_col) * out_channel + out_c] = sum;
-    }
-}
-
 ////////////////////// implementation ///////////////////////// 
 
 void conv2dFixedLongLong(

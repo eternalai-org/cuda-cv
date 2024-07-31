@@ -196,5 +196,11 @@ int main(int argc, char** argv)
     std::cout << "Concatenate: " << '\n';
     printmat3d(concatout, 2, 8, 1);
 
+    std::cout << "Mat mul:" << '\n';
+
+    maxmulFixedLongLong(inp44, inp44 + 8, out22, 4, 2, 4);
+
+    printmat3d(out22, 2, 2, 1);
+
     return 0;
 }
