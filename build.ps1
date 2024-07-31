@@ -1,0 +1,2 @@
+docker run --rm -it -v .:/workspace -w /workspace --gpus all nvidia/cuda:11.7.1-cudnn8-devel-ubuntu20.04  bash -c "cd src && make libcomputelib.so && cd -"
+cp src/libcomputelib.so release/libcomputelib.so
