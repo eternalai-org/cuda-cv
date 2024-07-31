@@ -13,7 +13,5 @@ jobs:
         with:
           cuda: '12.5.0'
       - run: |
-          nvidia-smi
-          nvcc --version
           cd src
           make libcomputelib.so
