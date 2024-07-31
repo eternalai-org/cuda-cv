@@ -3,9 +3,15 @@ run-name: Build shared library
 on: [push]
 jobs:
   build:
-    runs-on: nvidia/cuda:11.7.1-cudnn8-devel-ubuntu20.04
+    strategy:
+        matrix:
+          os: [ubuntu-22.04, ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: Jimver/cuda-toolkit@v0.2.16
+        id: cuda-toolkit
+        with:
+          cuda: '11.7'
       - run: |
           nvidia-smi
           nvcc --version
