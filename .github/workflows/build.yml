@@ -1,0 +1,13 @@
+name: CI
+run-name: Build shared library
+on: [push]
+jobs:
+  build:
+    runs-on: nvidia/cuda:11.7.1-cudnn8-devel-ubuntu20.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          nvidia-smi
+          nvcc --version
+          cd src
+          make libcomputelib.so
