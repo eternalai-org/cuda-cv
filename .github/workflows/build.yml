@@ -12,6 +12,8 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: '12.5.0'
-      - run: |
-          cd src
-          make libcomputelib.so
+
+      - run: nvidia-smi
+      - run: nvcc --version
+      - run: make libcomputelib.so
+        working-directory: src
