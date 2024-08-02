@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <functional.h>
-#include <utilities.h>
+#include <utilities.cuh>
 #include <vector>
 
 using namespace std;
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
     std::cout << "Avg Pooling: " << '\n';
     printmat3d(out22, 2, 2, 1);
 
-    // benchmark_conv2d();
+    benchmark_conv2d();
 
     long long concatout[16];
     long long _shapes[] = {2, 4, 1, 2, 4, 1};

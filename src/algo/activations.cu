@@ -6,6 +6,7 @@
 #include <fixedlonglong32x32.cuh>
 #include <functional.h>
 #include <kernels.cuh>
+#include <utilities.cuh>
 
 // softmax interface
 void softmaxFixedLongLong(long long *A, long long* B, int m) 
