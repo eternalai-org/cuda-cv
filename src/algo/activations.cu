@@ -4,9 +4,9 @@
 #include <assert.h>
 
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
+#include <operations.h>
 #include <kernels.cuh>
-#include <utilities.cuh>
+#include <helpers.cuh>
 
 // softmax interface
 void softmaxFixedLongLong(long long *A, long long* B, int m) 

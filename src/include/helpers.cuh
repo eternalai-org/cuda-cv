@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <tensor.h>
+#include <vector>
 
 void printmat3d(long long* mat, int h, int w, int c);
 
@@ -16,5 +18,28 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
       if (abort) exit(code);
    }
 }
+
+template <class T> 
+std::ostream &operator << (std::ostream &s, const std::vector<T> &a) {
+	s << "[";
+
+    for (int i = 0; i < a.size() - 1; ++i)
+    {
+        s << a[i] << ", ";
+    }
+
+    if (a.size() > 0)
+    {
+        s << a[a.size() - 1];
+    }
+
+	return s << "]";
+}
+
+std::ostream &operator << (std::ostream &s, const Tensor& a) {
+    s << "Tensor(" << a.mshape << ")";
+    return s;
+}
+
 
 #endif // __UTILITIES_H__

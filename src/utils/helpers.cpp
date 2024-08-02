@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <utilities.cuh>
+#include <helpers.cuh>
 
 void printmat3d(long long* mat, int h, int w, int c)
 {

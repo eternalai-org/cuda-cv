@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <functional.h>
+#include <operations.h>
 #include <fixedlonglong32x32.cuh>
 #include <kernels.cuh>
 

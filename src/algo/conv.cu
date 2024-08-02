@@ -2,7 +2,7 @@
 #include <cuda.h>
 #include <assert.h>
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
+#include <operations.h>
 #include <kernels.cuh>
 
 ////////////////////// implementation ///////////////////////// 

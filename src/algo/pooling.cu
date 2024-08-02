@@ -4,7 +4,7 @@
 #include <cstring>
 
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
+#include <operations.h>
 #include <kernels.cuh>
 
 

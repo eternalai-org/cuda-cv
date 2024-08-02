@@ -1,8 +1,8 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <functional.h>
-#include <utilities.cuh>
+#include <operations.h>
+#include <helpers.cuh>
 #include <vector>
 
 using namespace std;

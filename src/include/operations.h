@@ -116,7 +116,7 @@ void sigmoid3DFixedLongLong(long long *A, long long *B, int h, int w, int c);
 void tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c);
 void softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c);
 
-// normalization
+// normalizations
 void layerNormalizeFixedLongLong(
     long long *X, // input of shape (m, n, c) 
     long long *Y, // output of shape (m, n, c)
@@ -139,8 +139,9 @@ void batchNormalizeFixedLongLong(
     int h, int w, int c  // m, n, c 
 );
 
-void maxmulFloat(float *A, float *B, float *C, int m, int n, int k);
+// matrix mutiplications
 void maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k) ;
+void maxmulFloat(float *A, float *B, float *C, int m, int n, int k);
 void maxmulLong(long *A, long *B, long *C, long m, long n, long k);
 void maxmulInt(int *A, int *B, int *C, int m, int n, int k);
 void maxmulDouble(double *A, double *B, double *C, int m, int n, int k);

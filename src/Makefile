@@ -34,11 +34,11 @@ libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o poo
 	nvcc --ptxas-options=-v -o libcomputelib.so --shared matrixmul.o element_wise_operator.o normalization.o \
 			conv.o pooling.o activations.o merging.o kernels.o reduction.o $(cu_header) $(header) $(optimization)
 
-utilities.o: utilities.cpp
-	nvcc --compiler-options -fPIC -c -o utilities.o utilities.cpp $(cu_header) $(header) $(optimization)
+helpers.o: utils/helpers.cpp
+	nvcc --compiler-options -fPIC -c -o helpers.o utils/helpers.cpp $(cu_header) $(header) $(optimization)
 
-main: main.cu libcomputelib.so utilities.o
-	nvcc -o main main.cu utilities.o -L. -lcomputelib $(cu_header) $(header) $(optimization)
+main: main.cu libcomputelib.so helpers.o
+	nvcc -o main main.cu helpers.o -L. -lcomputelib $(cu_header) $(header) $(optimization)
 
 exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main

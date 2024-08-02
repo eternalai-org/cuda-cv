@@ -3,7 +3,7 @@
 #include <iostream>
 #include <assert.h>
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
+#include <operations.h>
 #include <kernels.cuh>
 
 
@@ -45,55 +45,27 @@ void maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n,
     // cout << "Start maxmulFixedLongLong\n";
 
     // Allocate device memory:
-    long long *gpu_A;
-    long long *gpu_B;
-    long long *gpu_C;
+    long long *gpu;
+    cudaMallocManaged(&gpu, sizeof(long long) * (m * n + n * k + m * k));
+    cudaMemcpy(gpu, A, sizeof(long long) * m * n, cudaMemcpyHostToDevice);
+    cudaMemcpy(gpu + n * m, B, sizeof(long long) * n * k, cudaMemcpyHostToDevice);
 
-    // cout << "------------------\n";
-    // cout << "A = {";
-    //for (int i = 0; i < m * n; ++i) cout << A[i] << (i != m * n - 1 ? ", " : "}\n");
-    cudaMallocManaged(&gpu_A, sizeof(long long) * m * n);
-    // cout << "cudaMallocManaged(&gpu_A, sizeof(long long)*m*n)\n";
-
-    cudaError_t errorA = cudaMemcpy(gpu_A, A, sizeof(long long) * m * n, cudaMemcpyHostToDevice);
-    //cout << "error cudaError_t cudaMemcpy gpu_A " << cudaGetErrorString(errorA) << "\n";
-    //cout << "gpu_A = {";
-    //for (int i = 0; i < m * n; ++i) cout << *(gpu_A+i) << (i != m * n - 1 ? ", " : "}\n");
-
-    cudaMallocManaged(&gpu_B, sizeof(long long) * n * k);
-    // cout << "B = {";
-    // for (int i = 0; i < n * k; ++i) cout << B[i] << (i != n * k - 1 ? ", " : "}\n");
-    cudaError_t errorB = cudaMemcpy(gpu_B, B, sizeof(long long) * n * k, cudaMemcpyHostToDevice);
-    //cout << "error cudaError_t cudaMemcpy gpu_B " << cudaGetErrorString(errorB) << "\n";
-    //cout << "gpu_B = {";
-    //for (int i = 0; i < n * k; ++i) cout << *(gpu_B+i) << (i != n * k - 1 ? ", " : "}\n");
-
-    cudaMallocManaged(&gpu_C, sizeof(long long) * m * k);
-
-    int BLOCK_SIZE = 16;
-    // Blocks & grids:
+    int BLOCK_SIZE = 32;
     unsigned int grid_rows = (m + BLOCK_SIZE - 1) / BLOCK_SIZE;
     unsigned int grid_cols = (k + BLOCK_SIZE - 1) / BLOCK_SIZE;
     dim3 blocks(BLOCK_SIZE, BLOCK_SIZE);
     dim3 grid(grid_cols, grid_rows);
 
     // Call the kernel:
-    vecmulFixedLongLong<<<grid, blocks>>>(gpu_A, gpu_B, gpu_C, m, n, k);
+    vecmulFixedLongLong<<<grid, blocks>>>(
+        gpu, 
+        gpu + n * m, 
+        gpu + m * n + n * k, 
+        m, n, k
+    );
 
-
-    //cout << "gpu_C = {";
-    //for (int i = 0; i < m * k; ++i) cout << *(gpu_C+i) << (i != m * k - 1 ? ", " : "}\n");
-    // Get the result Matrix:
-    cudaMemcpy(C, gpu_C, sizeof(long long) * m * k, cudaMemcpyDeviceToHost);
-    // cout << "C = {";
-    // for (int i = 0; i < m * k; ++i) cout << C[i] << (i != m * k - 1 ? ", " : "}\n");
-
-    // cout << "------------------\n";
-    //Free device matrices
-    cudaFree(gpu_A);
-    cudaFree(gpu_B);
-    cudaFree(gpu_C);
-    // cout << "End maxmulFixedLongLong\n";
+    cudaMemcpy(C, gpu + m * n + n * k, sizeof(long long) * m * k, cudaMemcpyDeviceToHost);
+    cudaFree(gpu);
 }
 
 void maxmulLong(long *A, long *B, long *C, long m, long n, long k) {
