@@ -5,7 +5,8 @@ jobs:
   build:
     strategy:
         matrix:
-          os: [ubuntu-20.04]
+          os: ['self-hosted']
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: Jimver/cuda-toolkit@v0.2.16
