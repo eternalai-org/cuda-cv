@@ -1,4 +1,4 @@
-#include <operations.h>
+#include <operations.cuh>
 #include <io.h>
 #include <tensor.h>
 #include <memory.h>

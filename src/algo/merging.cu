@@ -3,13 +3,11 @@
 #include <assert.h>
 #include <string.h>
 
-#include <operations.h>
 #include <fixedlonglong32x32.cuh>
 #include <kernels.cuh>
+#include <operations.cuh>
 
-
-
-void concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n)
+void __concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n, bool& error)
 {
     long long* out_shape = new long long[ndims];
 
@@ -56,11 +54,11 @@ void concatenate(long long* inp, long long* out, long long* shapes, long long ax
     delete[] starts;
 }
 
-bool estimateConcatenate(long long* shapes, long long axis, long long ndims, long long n, long long* out)
+uint8_t estimateConcatenate(long long* shapes, long long axis, long long ndims, long long n, long long* out)
 {
     if (ndims <= 0 || n <= 0 || axis < 0 || axis >= ndims)
     {
-        return false;
+        return ERROR;
     }
 
     memset(out, 0x00, ndims * sizeof(long long));
@@ -83,10 +81,10 @@ bool estimateConcatenate(long long* shapes, long long axis, long long ndims, lon
         {
             if (shapes[i] != shapes[j])
             {
-                return false;
+                return ERROR;
             }
         }
     }
 
-    return true;
+    return OK;
 }

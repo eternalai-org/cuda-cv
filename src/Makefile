@@ -30,9 +30,12 @@ merging.o:  algo/merging.cu
 reduction.o:  algo/reduction.cu
 	nvcc --compiler-options -fPIC -c -o reduction.o  algo/reduction.cu $(cu_header) $(header) $(optimization)
 
-libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o activations.o merging.o kernels.o reduction.o
+wrappers.o: algo/wrappers.cu
+	nvcc --compiler-options -fPIC -c -o wrappers.o algo/wrappers.cu $(cu_header) $(header) $(optimization)
+
+libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o activations.o merging.o kernels.o reduction.o wrappers.o
 	nvcc --ptxas-options=-v -o libcomputelib.so --shared matrixmul.o element_wise_operator.o normalization.o \
-			conv.o pooling.o activations.o merging.o kernels.o reduction.o $(cu_header) $(header) $(optimization)
+			conv.o pooling.o activations.o merging.o kernels.o reduction.o wrappers.o $(cu_header) $(header) $(optimization)
 
 helpers.o: utils/helpers.cpp
 	nvcc --compiler-options -fPIC -c -o helpers.o utils/helpers.cpp $(cu_header) $(header) $(optimization)

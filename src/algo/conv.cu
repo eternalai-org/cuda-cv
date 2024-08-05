@@ -2,16 +2,17 @@
 #include <cuda.h>
 #include <assert.h>
 #include <fixedlonglong32x32.cuh>
-#include <operations.h>
+#include <operations.cuh>
 #include <kernels.cuh>
 
 ////////////////////// implementation ///////////////////////// 
 
-void conv2dFixedLongLong(
+void __conv2dFixedLongLong(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int kernel_size, int in_channel, int out_channel, // kernel properties
     int h, int w, // spatial size of inp,
     int padding, int stride_h, int stride_w // padding: same(0) or valid(1)
+    , bool& error
 )
 {
 
@@ -116,7 +117,7 @@ void conv2dFixedLongLong(
     cudaFree(d_gpu);
 }     
 
-void estimateConvOutputSize(
+uint8_t estimateConvOutputSize(
     int kernel_size, int in_channel, int out_channel, // kernel properties
     int h, int w, // spatial size of inp,
     int padding, int stride_h, int stride_w, // padding: same(0) or valid(1)
@@ -142,4 +143,6 @@ void estimateConvOutputSize(
 
     out_w = (w + pad_left + pad_right - kernel_size) / stride_w + 1;
     out_h = (h + pad_top + pad_bottom - kernel_size) / stride_h + 1;
+
+    return OK;
 }

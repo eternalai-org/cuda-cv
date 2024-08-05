@@ -3,11 +3,11 @@
 #include <iostream>
 #include <assert.h>
 #include <fixedlonglong32x32.cuh>
-#include <operations.h>
 #include <kernels.cuh>
+#include <operations.cuh>
 
 
-void maxmulFloat(float *A, float *B, float *C, int m, int n, int k) {
+void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, bool& error) {
 
     // Allocate device memory:
     float *gpu_A;
@@ -41,7 +41,7 @@ void maxmulFloat(float *A, float *B, float *C, int m, int n, int k) {
     cudaFree(gpu_C);
 }
 
-void maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k) {
+void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k, bool& error) {
     // cout << "Start maxmulFixedLongLong\n";
 
     // Allocate device memory:
@@ -68,7 +68,7 @@ void maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n,
     cudaFree(gpu);
 }
 
-void maxmulLong(long *A, long *B, long *C, long m, long n, long k) {
+void __maxmulLong(long *A, long *B, long *C, long m, long n, long k, bool& error) {
 
     // Allocate device memory:
     long *gpu_A;
@@ -102,7 +102,7 @@ void maxmulLong(long *A, long *B, long *C, long m, long n, long k) {
     cudaFree(gpu_C);
 }
 
-void maxmulInt(int *A, int *B, int *C, int m, int n, int k) {
+void __maxmulInt(int *A, int *B, int *C, int m, int n, int k, bool& error) {
 
     // Allocate device memory:
     int *gpu_A;
@@ -136,7 +136,7 @@ void maxmulInt(int *A, int *B, int *C, int m, int n, int k) {
     cudaFree(gpu_C);
 }
 
-void maxmulDouble(double *A, double *B, double *C, int m, int n, int k) {
+void __maxmulDouble(double *A, double *B, double *C, int m, int n, int k, bool& error) {
 
     // Allocate device memory:
     double *gpu_A;

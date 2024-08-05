@@ -4,7 +4,7 @@
 #include <cstring>
 
 #include <fixedlonglong32x32.cuh>
-#include <operations.h>
+#include <operations.cuh>
 #include <kernels.cuh>
 
 
@@ -14,6 +14,7 @@
 void globalAvgPoolingFixedLongLong_impl(
     long long* inp, long long* out,
     int h, int w, int in_channel
+    , bool& error
 )
 {
     const int block_sz = 512;
@@ -31,7 +32,7 @@ void globalAvgPoolingFixedLongLong_impl(
     if (grid_sz_x > 1)
     {
         globalAvgPoolingFixedLongLong_impl(
-            blockSum, out, grid_sz_x, 1, in_channel
+            blockSum, out, grid_sz_x, 1, in_channel, error
         );
     }
     else
@@ -42,11 +43,12 @@ void globalAvgPoolingFixedLongLong_impl(
     cudaFree(blockSum);    
 }
 
-void maxPoolingFixedLongLong(
+void __maxPoolingFixedLongLong(
     long long* inp, long long* out, // data io
     int h, int w, int in_channel, // in spatial size, in_channel
     int pool_size, int stride_h, int stride_w, // pooling size, stride 
     int padding // padding mode, one of 'valid': 0 or 'same': 1
+    , bool& error
 )
 {
     // only support for squared pool size, squared input
@@ -148,11 +150,12 @@ void maxPoolingFixedLongLong(
     cudaFree(d_gpu);
 }
 
-void avgPoolingFixedLongLong(
+void __avgPoolingFixedLongLong(
     long long* inp, long long* out,
     int h, int w, int in_channel,
     int pool_size, int stride_h, int stride_w,
     int padding
+    , bool& error
 )
 {
     // only support for squared pool size, squared input
@@ -242,15 +245,16 @@ void avgPoolingFixedLongLong(
     cudaFree(d_gpu);
 }
 
-void globalAvgPoolingFixedLongLong(
+void __globalAvgPoolingFixedLongLong(
     long long* inp, long long* out,
-    int h, int w, int in_channel
+    int h, int w, int in_channel,
+    bool& error
 )
 {
     long long* gpu;
     cudaMalloc(&gpu, sizeof(long long) * (h * w * in_channel + in_channel));
     cudaMemcpy(gpu + in_channel, inp, h * w * in_channel * sizeof(long long), cudaMemcpyHostToDevice);
-    globalAvgPoolingFixedLongLong_impl(gpu + in_channel, gpu, h, w, in_channel);
+    globalAvgPoolingFixedLongLong_impl(gpu + in_channel, gpu, h, w, in_channel, error);
     cudaMemcpy(out, gpu, in_channel * sizeof(long long), cudaMemcpyDeviceToHost);
 
     // assume the number of channel is not too large at the moment
@@ -265,7 +269,7 @@ void globalAvgPoolingFixedLongLong(
     cudaFree(gpu);
 }
 
-void estimatePoolingOutputSize(
+uint8_t estimatePoolingOutputSize(
     int h, int w, int in_channel,
     int pool_size, int padding, 
     int stride_h, int stride_w,
@@ -301,4 +305,5 @@ void estimatePoolingOutputSize(
 
     out_w = (w + pad_left + pad_right - pool_size) / stride_w + 1;
     out_h = (h + pad_top + pad_bottom - pool_size) / stride_h + 1;
+    return OK;
 }

@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <tensor.h>
 #include <vector>
+#include <iostream>
 
 void printmat3d(long long* mat, int h, int w, int c);
 
@@ -36,10 +36,10 @@ std::ostream &operator << (std::ostream &s, const std::vector<T> &a) {
 	return s << "]";
 }
 
-std::ostream &operator << (std::ostream &s, const Tensor& a) {
-    s << "Tensor(" << a.mshape << ")";
-    return s;
-}
+// std::ostream &operator << (std::ostream &s, const Tensor& a) {
+//     s << "Tensor(" << a.mshape << ")";
+//     return s;
+// }
 
 
 #endif // __UTILITIES_H__

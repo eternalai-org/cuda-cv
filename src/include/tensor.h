@@ -61,7 +61,7 @@ public:
     }
 
     // Tensor& unpack(uint8_t* payload, int size)
-    static Tensor& unpack(uint8_t* payload)
+    static Tensor* unpack(uint8_t* payload)
     {
         uint64_t* ptr = (uint64_t*) payload;
         int dims = ptr[0];
@@ -76,10 +76,10 @@ public:
         uint64_t* data = new uint64_t[prod];
         memcpy(data, ptr + 1 + dims, prod * sizeof(uint64_t));
 
-        return Tensor(shape, data);
+        return new Tensor(shape, data);
     }
 
-    static Tensor& unpack(std::shared_ptr<uint8_t> payload)
+    static Tensor* unpack(std::shared_ptr<uint8_t> payload)
     {
         return unpack(payload.get());
     }

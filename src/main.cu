@@ -1,7 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <operations.h>
+#include <operations.cuh>
 #include <helpers.cuh>
 #include <vector>
 
@@ -90,6 +90,7 @@ int main(int argc, char** argv)
         inp, out, ma, mv, gama, beta, 
         0, 1, 1, 5
     );
+
     std::cout << "Batch Normalization: " << '\n';
     printmat3d(out, 5, 1, 1);
 
@@ -133,22 +134,28 @@ int main(int argc, char** argv)
     std::cout << "Input: " << '\n';
     printmat3d(inp, 5, 1, 1);
 
-    long long sum = sumReduction(inp, 5);
+    long long sum = 0;
+    bool ok = sumReduction(inp, 5, &sum);
     std::cout << "Sum: " << 1.0f * sum / (1LL << 32) << '\n';
 
-    long long max = maxReduction(inp, 5);
-    std::cout << "Max: " << 1.0f * max / (1LL << 32) << '\n';
+    long long mx = 0;
+    ok = maxReduction(inp, 5, &mx);
+    std::cout << "Max: " << 1.0f * mx / (1LL << 32) << '\n';
 
-    long long min = minReduction(inp, 5);
-    std::cout << "Min: " << 1.0f * min / (1LL << 32) << '\n';
+    long long mn = 0;
+    ok = minReduction(inp, 5, &mn);
+    std::cout << "Min: " << 1.0f * mn / (1LL << 32) << '\n';
 
-    long long mean = meanReduction(inp, 5);
+    long long mean = 0;
+    ok = meanReduction(inp, 5, &mean);
     std::cout << "Mean: " << 1.0f * mean / (1LL << 32) << '\n';
 
-    long long std = stdReduction(inp, 5);
+    long long std = 0;
+    ok = stdReduction(inp, 5, &std);
     std::cout << "Std: " << 1.0f * std / (1LL << 32) << '\n';
 
-    long long avg = avgReduction(inp, 5);
+    long long avg = 0;
+    ok = avgReduction(inp, 5, &avg);
     std::cout << "Avg: " << 1.0f * avg / (1LL << 32) << '\n';
 
     globalAvgPoolingFixedLongLong(inp, out, 1, 1, 5);
