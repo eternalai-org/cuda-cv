@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <tensor.h>
 #include <vector>
 #include <iostream>
 
@@ -36,10 +37,23 @@ std::ostream &operator << (std::ostream &s, const std::vector<T> &a) {
 	return s << "]";
 }
 
-// std::ostream &operator << (std::ostream &s, const Tensor& a) {
-//     s << "Tensor(" << a.mshape << ")";
-//     return s;
-// }
+std::ostream &operator << (std::ostream &s, const TensorWrapper& a) {
+    s << "Tensor(" << a.shape() << ") : ";
+    int prod = 1;
+    for (const auto& x: a.shape())
+    {
+        prod *= x;
+    }
+
+    const int64_t* ref = a.data();
+
+    for (int i = 0; i < prod; ++i)
+    {
+        s << ref[i] << " ";
+    }
+
+    return s;
+}
 
 
 #endif // __UTILITIES_H__

@@ -36,5 +36,5 @@ def chunked(l, n):
     for i in range(0, len(l), n):
         yield l[i:i+n]
 
-for l in chunked(encoded, 32):
-    print(int.from_bytes(l, 'big'))
+for i, l in enumerate(chunked(encoded, 32)):
+    print(32 * i, int.from_bytes(l, 'big'))
