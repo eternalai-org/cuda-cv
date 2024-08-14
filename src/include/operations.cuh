@@ -104,6 +104,9 @@ uint8_t zScore(long long* inp, long long* out, long long eps, int n);
 uint8_t estimateConcatenate(long long* shapes, long long axis, long long ndims, long long n, long long* out);
 uint8_t concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n);
 
+uint8_t estimateConcatenate(long long** shapes, long long axis, long long ndims, long long n, long long* out);
+uint8_t concatenate(long long** inp, long long* out, long long** shapes, long long axis, long long ndims, long long n);
+
 
 // activations
 uint8_t softmaxFixedLongLong(long long *A, long long* B, int m);
