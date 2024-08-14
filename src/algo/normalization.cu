@@ -16,7 +16,7 @@ void __layerNormalizeFixedLongLong(
     long long *beta, // offset (c)
     long long epsilon, // epsilon 
     int h, int w, int c  // m, n, c 
-    , bool& error
+    , uint8_t* error
 ) 
 {
     
@@ -31,7 +31,7 @@ void __batchNormalizeFixedLongLong(
     long long *beta, // offset (c)
     long long epsilon, // epsilon 
     int h, int w, int c  // m, n, c 
-    , bool& error
+    , uint8_t* error
 ) 
 {
     long long *gpu;

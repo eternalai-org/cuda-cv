@@ -12,7 +12,7 @@ void __conv2dFixedLongLong(
     int kernel_size, int in_channel, int out_channel, // kernel properties
     int h, int w, // spatial size of inp,
     int padding, int stride_h, int stride_w // padding: same(0) or valid(1)
-    , bool& error
+    , uint8_t* error
 )
 {
 

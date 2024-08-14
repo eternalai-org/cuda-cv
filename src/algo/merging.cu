@@ -7,7 +7,7 @@
 #include <kernels.cuh>
 #include <operations.cuh>
 
-void __concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n, bool& error)
+void __concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n, uint8_t* error)
 {
     long long* out_shape = new long long[ndims];
 

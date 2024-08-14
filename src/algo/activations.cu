@@ -9,7 +9,7 @@
 #include <operations.cuh>
 
 // softmax interface
-void __softmaxFixedLongLong(long long *A, long long* B, int m, bool& error) 
+void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error) 
 {
     long long *gpu_a, *gpu_b, *buffer_tmp;
 
@@ -41,7 +41,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, bool& error)
 }
 
 // sigmoid interface
-void __sigmoidFixedLongLong(long long *A, long long* B, int m, bool& error) 
+void __sigmoidFixedLongLong(long long *A, long long* B, int m, uint8_t* error) 
 {  
     long long *gpu_a, *gpu_b;
     
@@ -59,7 +59,7 @@ void __sigmoidFixedLongLong(long long *A, long long* B, int m, bool& error)
 }
 
 // tanh interface
-void __tanhFixedLongLong(long long *A, long long *B, int m, bool& error) 
+void __tanhFixedLongLong(long long *A, long long *B, int m, uint8_t* error) 
 {
     long long *gpu_a, *gpu_b;
     
@@ -77,7 +77,7 @@ void __tanhFixedLongLong(long long *A, long long *B, int m, bool& error)
 }
 
 // relu interface
-void __reluFixedLongLong(long long *A, long long *B, int m, bool& error) 
+void __reluFixedLongLong(long long *A, long long *B, int m, uint8_t* error) 
 {
     long long *gpu_a, *gpu_b;
     
@@ -95,7 +95,7 @@ void __reluFixedLongLong(long long *A, long long *B, int m, bool& error)
 }
 
 // relu interface
-void __relu3DFixedLongLong(long long *A, long long *B, int h, int w, int c, bool& error) 
+void __relu3DFixedLongLong(long long *A, long long *B, int h, int w, int c, uint8_t* error) 
 {
     long long* gpu;
     const int N = h * w * c;
@@ -112,7 +112,7 @@ void __relu3DFixedLongLong(long long *A, long long *B, int h, int w, int c, bool
 }
 
 // relu interface
-void __sigmoid3DFixedLongLong(long long *A, long long *B, int h, int w, int c, bool& error) 
+void __sigmoid3DFixedLongLong(long long *A, long long *B, int h, int w, int c, uint8_t* error) 
 {
     long long* gpu;
     const int N = h * w * c;
@@ -130,7 +130,7 @@ void __sigmoid3DFixedLongLong(long long *A, long long *B, int h, int w, int c, b
 
 
 // relu interface
-void __tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c, bool& error) 
+void __tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c, uint8_t* error) 
 {
     long long* gpu;
     const int N = h * w * c;
@@ -146,7 +146,7 @@ void __tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c, bool
     cudaFree(gpu);
 }
 
-void __softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c, bool& error)
+void __softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c, uint8_t* error)
 {
     memset(B, 0, sizeof(long long) * h * w * c);
 }

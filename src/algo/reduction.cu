@@ -7,7 +7,7 @@
 #include <kernels.cuh>
 #include <operations.cuh>
 
-long long sumReduction_impl(long long* d_gpu, int n, bool& error)
+long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
 {
     long long res = 0;
     int block_sz = 512;
@@ -35,7 +35,7 @@ long long sumReduction_impl(long long* d_gpu, int n, bool& error)
 
 
 
-long long maxReduction_impl(long long* d_gpu, int n, bool& error)
+long long maxReduction_impl(long long* d_gpu, int n, uint8_t* error)
 {
     long long res = 0;
     int block_sz = 1024;
@@ -63,7 +63,7 @@ long long maxReduction_impl(long long* d_gpu, int n, bool& error)
 
 
 
-long long minReduction_impl(long long* d_gpu, int n, bool& error)
+long long minReduction_impl(long long* d_gpu, int n, uint8_t* error)
 {
     long long res = 0;
     int block_sz = 512;
@@ -89,7 +89,7 @@ long long minReduction_impl(long long* d_gpu, int n, bool& error)
     return res;
 }
 
-long long __sumReduction(long long* inp, int n, bool& error)
+long long __sumReduction(long long* inp, int n, uint8_t* error)
 {
     long long* gpu; 
     cudaMalloc(&gpu, n * sizeof(long long));
@@ -99,12 +99,12 @@ long long __sumReduction(long long* inp, int n, bool& error)
     return res;
 }
 
-long long __avgReduction(long long* inp, int n, bool& error)
+long long __avgReduction(long long* inp, int n, uint8_t* error)
 {
     return FixedLongLong::div(__sumReduction(inp, n, error), (1ll * n) << 32);
 }
 
-long long __maxReduction(long long* inp, int n, bool& error)
+long long __maxReduction(long long* inp, int n, uint8_t* error)
 {
     long long* gpu; 
     cudaMalloc(&gpu, n * sizeof(long long));
@@ -114,7 +114,7 @@ long long __maxReduction(long long* inp, int n, bool& error)
     return res;
 }
 
-long long __minReduction(long long* inp, int n, bool& error)
+long long __minReduction(long long* inp, int n, uint8_t* error)
 {
     long long* gpu; 
     cudaMalloc(&gpu, n * sizeof(long long));
@@ -124,25 +124,25 @@ long long __minReduction(long long* inp, int n, bool& error)
     return res;
 }
 
-long long __meanReduction(long long* inp, int n, bool& error)
+long long __meanReduction(long long* inp, int n, uint8_t* error)
 {
     return FixedLongLong::div(__sumReduction(inp, n, error), (1LL * n) << 32);
 }
 
-long long __stdReduction(long long* inp, int n, bool& error)
+long long __stdReduction(long long* inp, int n, uint8_t* error)
 {
     long long mean = __meanReduction(inp, n, error);
     return 0;
 }
 
-void __maxMinScale(long long* inp, long long* out, int n, bool& error)
+void __maxMinScale(long long* inp, long long* out, int n, uint8_t* error)
 {
     long long min = __minReduction(inp, n, error);
     long long max = __maxReduction(inp, n, error);
 
 }
 
-void __zScore(long long* inp, long long* out, long long eps, int n, bool& error)
+void __zScore(long long* inp, long long* out, long long eps, int n, uint8_t* error)
 {
     long long mean = __meanReduction(inp, n, error); 
     long long std = __stdReduction(inp, n, error);

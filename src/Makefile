@@ -2,40 +2,57 @@ cu_header = -I/usr/local/cuda/include
 header = -Iinclude
 header_files = include/fixedlonglong32x32.cuh include/functional.h
 optimization = -O2
+compile_flags = -Xcompiler="-fpermissive"
 
 kernels.o: algo/kernels.cu
-	nvcc --compiler-options -fPIC -c -o kernels.o  algo/kernels.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o kernels.o  algo/kernels.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 matrixmul.o: algo/matrixmul.cu
-	nvcc --compiler-options -fPIC -c -o matrixmul.o  algo/matrixmul.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o matrixmul.o  algo/matrixmul.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 element_wise_operator.o:  algo/element_wise_operator.cu
-	nvcc --compiler-options -fPIC -c -o element_wise_operator.o  algo/element_wise_operator.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o element_wise_operator.o  algo/element_wise_operator.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 normalization.o:  algo/normalization.cu
-	nvcc --compiler-options -fPIC -c -o normalization.o  algo/normalization.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o normalization.o  algo/normalization.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 conv.o:  algo/conv.cu
-	nvcc --compiler-options -fPIC -c -o conv.o  algo/conv.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o conv.o  algo/conv.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 pooling.o:  algo/pooling.cu
-	nvcc --compiler-options -fPIC -c -o pooling.o  algo/pooling.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o pooling.o  algo/pooling.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 activations.o:  algo/activations.cu
-	nvcc --compiler-options -fPIC -c -o activations.o  algo/activations.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o activations.o  algo/activations.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 merging.o:  algo/merging.cu
-	nvcc --compiler-options -fPIC -c -o merging.o  algo/merging.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o merging.o  algo/merging.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 reduction.o:  algo/reduction.cu
-	nvcc --compiler-options -fPIC -c -o reduction.o  algo/reduction.cu $(cu_header) $(header) $(optimization)
+	nvcc --compiler-options -fPIC -c -o reduction.o  algo/reduction.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
-wrappers.o: algo/wrappers.cu
-	nvcc --compiler-options -fPIC -c -o wrappers.o algo/wrappers.cu $(cu_header) $(header) $(optimization)
+wrapper.o: deprecated/algo/wrapper.cu
+	nvcc --compiler-options -fPIC -c -o wrapper.o deprecated/algo/wrapper.cu \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
 
-libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o activations.o merging.o kernels.o reduction.o wrappers.o
+computelib.o: computelib.cpp
+	nvcc --compiler-options -fPIC -c -o computelib.o computelib.cpp \
+	$(cu_header) $(header) $(optimization) $(compile_flags)
+
+libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o \
+	activations.o merging.o kernels.o reduction.o wrapper.o computelib.o
 	nvcc --ptxas-options=-v -o libcomputelib.so --shared matrixmul.o element_wise_operator.o normalization.o \
-			conv.o pooling.o activations.o merging.o kernels.o reduction.o wrappers.o $(cu_header) $(header) $(optimization)
+			conv.o pooling.o activations.o merging.o kernels.o reduction.o wrapper.o computelib.o \
+			$(cu_header) $(header) $(optimization) $(compile_flags)
 
 helpers.o: utils/helpers.cpp
 	nvcc --compiler-options -fPIC -c -o helpers.o utils/helpers.cpp $(cu_header) $(header) $(optimization)
@@ -45,6 +62,9 @@ main: main.cu libcomputelib.so helpers.o
 
 exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main
+
+debug: libcomputelib.so
+	python3 ../test/test_abi.py
 
 clean:
 	rm -f *.o *.so

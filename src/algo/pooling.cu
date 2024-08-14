@@ -14,7 +14,7 @@
 void globalAvgPoolingFixedLongLong_impl(
     long long* inp, long long* out,
     int h, int w, int in_channel
-    , bool& error
+    , uint8_t* error
 )
 {
     const int block_sz = 512;
@@ -48,7 +48,7 @@ void __maxPoolingFixedLongLong(
     int h, int w, int in_channel, // in spatial size, in_channel
     int pool_size, int stride_h, int stride_w, // pooling size, stride 
     int padding // padding mode, one of 'valid': 0 or 'same': 1
-    , bool& error
+    , uint8_t* error
 )
 {
     // only support for squared pool size, squared input
@@ -155,7 +155,7 @@ void __avgPoolingFixedLongLong(
     int h, int w, int in_channel,
     int pool_size, int stride_h, int stride_w,
     int padding
-    , bool& error
+    , uint8_t* error
 )
 {
     // only support for squared pool size, squared input
@@ -248,7 +248,7 @@ void __avgPoolingFixedLongLong(
 void __globalAvgPoolingFixedLongLong(
     long long* inp, long long* out,
     int h, int w, int in_channel,
-    bool& error
+    uint8_t* error
 )
 {
     long long* gpu;

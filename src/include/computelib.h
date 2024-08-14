@@ -43,19 +43,24 @@ enum opcode
     REDUCTION_MEAN = 23, // 23
     REDUCTION_SUM = 24, // 24
     REDUCTION_ARGMAX = 25, // 25
-    REDUCTION_ARGMIN = 26 // 26
+    REDUCTION_ARGMIN = 26, // 26
+
+    // misc
+    DROPOUT = 27 // 27
 };
 
 #if __cplusplus
 extern "C" {
 #endif
 
-void cuda_execute_operation(
-    uint8_t* payload_in, 
-    int32_t length_in,
-    uint8_t* payload_out, 
-    int32_t* length_out 
+uint8_t* cuda_execute_operation(
+    uint8_t* payload_in, // bytes: opcode, params, shapes, tensors
+    int32_t length_in, 
+    int32_t* length_out,
+    uint8_t* has_eerror
 );
+
+void deallocate(uint8_t* payload);
 
 #if __cplusplus
 }
