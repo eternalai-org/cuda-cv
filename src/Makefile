@@ -44,8 +44,8 @@ wrapper.o: deprecated/algo/wrapper.cu
 	nvcc --compiler-options -fPIC -c -o wrapper.o deprecated/algo/wrapper.cu \
 	$(cu_header) $(header) $(optimization) $(compile_flags)
 
-computelib.o: computelib.cpp
-	nvcc --compiler-options -fPIC -c -o computelib.o computelib.cpp \
+computelib.o: computelib.cu
+	nvcc --compiler-options -fPIC -c -o computelib.o computelib.cu \
 	$(cu_header) $(header) $(optimization) $(compile_flags)
 
 libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o \
