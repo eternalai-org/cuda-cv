@@ -34,7 +34,7 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], c_out = kernel[3], h_out, w_out;
     uint32_t kh = kernel[0], kw = kernel[1], padding = params[2], stride_h = params[0], stride_w = params[1];
-    estimateConvOutputSize_(kh, c_in, c_out, h_in, w_in, padding, stride_h, stride_w, &h_out, &w_out);
+    estimateConvOutputSize(kh, c_in, c_out, h_in, w_in, padding, stride_h, stride_w, &h_out, &w_out);
 
     std::vector<uint64_t> out_shape = {h_out, w_out, c_out};
     int64_t* out = new int64_t[h_out * w_out * c_out];
@@ -85,7 +85,7 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
-    estimatePoolingOutputSize_(
+    estimatePoolingOutputSize(
         h_in, w_in, c_in, kh, padding, stride_h, stride_w, &h_out, &w_out
     );
 
@@ -135,7 +135,7 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
-    estimatePoolingOutputSize_(
+    estimatePoolingOutputSize(
         h_in, w_in, c_in, kh, padding, stride_h, stride_w, &h_out, &w_out
     );
 

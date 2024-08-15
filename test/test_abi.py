@@ -5,6 +5,7 @@ import random
 import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
+import json
 
 '''
 uint8_t* cuda_execute_operation(
@@ -50,47 +51,54 @@ def create_random_test_case():
 def compare_tensors(t1, t2):
     return all(x == y for x, y in zip(t1, t2))
 
+
+def run_case(*args):
+    sample = create_random_test_case()
+    inp = abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'uint256[][]'), sample)
+    
+    length_out = ctypes.c_int()
+    has_error = ctypes.c_int()
+
+    length_out_ptr = ctypes.pointer(length_out)
+    has_error_ptr = ctypes.pointer(has_error)
+
+    out = dll.cuda_execute_operation(inp, len(inp), length_out_ptr, has_error_ptr)
+
+    deref = bytes(ctypes.cast(out, ctypes.POINTER(ctypes.c_ubyte * length_out.value)).contents)
+
+    template_out = ('uint256[]', 'uint64[]')
+    (tensor_out, shape_out) = abi_decode(template_out, deref)
+    dll.deallocate_cpp_response(out)
+
+    if not (compare_tensors(sample[3][0], tensor_out) and compare_tensors(sample[2][0], shape_out) and has_error.value == 0):
+        random_payload = str(random.randint(0, 1000000))
+
+        with open(f'error_{random_payload}.json', 'w') as f:
+            json.dump({
+                'sample': sample,
+                'tensor_out': tensor_out,
+                'shape_out': shape_out,
+                'has_error': has_error.value
+            }, f)
+
+    return compare_tensors(sample[3][0], tensor_out) and compare_tensors(sample[2][0], shape_out) and has_error.value == 0
+
 def benchmark_abi():
+    n_cases = 1000 * 1000
     
+    futures = []
+    with ProcessPoolExecutor(max_workers=2) as executor:
+        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+            futures.append(executor.submit(run_case))
 
-    import time, random
-
-    n_cases = 1 * 1000 * 1000
-    total_execution_time = 0
-    
-    def run_case(*args):
-        sample = create_random_test_case()
-        inp = abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'uint256[][]'), sample)
-        
-        length_out = ctypes.c_int()
-        has_error = ctypes.c_int()
-
-        length_out_ptr = ctypes.pointer(length_out)
-        has_error_ptr = ctypes.pointer(has_error)
-
-        out = dll.cuda_execute_operation(inp, len(inp), length_out_ptr, has_error_ptr)
-
-        deref = bytes(ctypes.cast(out, ctypes.POINTER(ctypes.c_ubyte * length_out.value)).contents)
-
-        template_out = ('uint256[]', 'uint64[]')
-
-        (tensor_out, shape_out) = abi_decode(template_out, deref)
-        dll.deallocate(out)
-
-        if not (compare_tensors(sample[3][0], tensor_out) and compare_tensors(sample[2][0], shape_out) and has_error.value == 0):
-            random_payload = str(random.randint(0, 1000000))
-
-            with open(f'error_{random_payload}.bin', 'wb') as f:
-                f.write(deref)
-                
-        return compare_tensors(sample[3][0], tensor_out) and compare_tensors(sample[2][0], shape_out) and has_error.value == 0
-
-    with ProcessPoolExecutor(max_workers=8) as executor:
-        results = list(tqdm(executor.map(run_case, range(n_cases)), total=n_cases))
-
+    results = [f.result() for f in tqdm(futures, total=n_cases, desc='Processing results')]
     print('All results are', all(results))
+    executor.shutdown()
 
 if __name__ == '__main__':
+    
+    benchmark_abi()
+    
     # test matmul
     shape_a = [2, 3]
     shape_b = [3, 2]
@@ -117,15 +125,16 @@ if __name__ == '__main__':
     has_error_ptr = ctypes.pointer(has_error)
     
     out = dll.cuda_execute_operation(inp, len(inp), length_out_ptr, has_error_ptr) 
+    print('Error:', has_error.value, out.__class__, length_out.value)
     
-    deref = bytes(ctypes.cast(out, ctypes.POINTER(ctypes.c_ubyte * length_out.value)).contents)
+    deref = bytearray(ctypes.cast(out, ctypes.POINTER(ctypes.c_char * length_out.value)).contents)
     template_out = ('uint256[]', 'uint64[]')
     
     (tensor_out, shape_out) = abi_decode(template_out, deref)
     
-    dll.deallocate_cpp_response(out)
     
     tensor_out = np.array([unpack_uint256(i) for i in tensor_out], dtype=np.float64).flatten().reshape(shape_out)
         
     print('Result:', c)
     print('Got:', tensor_out / (2 ** 32))
+    dll.deallocate_cpp_response(out)

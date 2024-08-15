@@ -65,10 +65,6 @@ void __softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c, u
 void __layerNormalizeFixedLongLong(long long *X, long long *Y, long long *ma, long long *mv, long long *gamma, long long *beta, long long epsilon, int h, int w, int c, uint8_t* error);
 void __batchNormalizeFixedLongLong(long long *X, long long *Y, long long *ma, long long *mv, long long *gamma, long long *beta, long long epsilon, int h, int w, int c, uint8_t* error);
 
-uint8_t estimateConvOutputSize_(int kernel_size, int in_channel, int out_channel, int h, int w, int padding, int stride_h, int stride_w, int* out_h, int* out_w);
-uint8_t estimatePoolingOutputSize_(int h, int w, int in_channel, int pool_size, int padding, int stride_h, int stride_w, int* out_h, int* out_w);
-
-
 #if __cplusplus
 extern "C" {
 #endif
@@ -87,14 +83,14 @@ uint8_t matSqrtLongLong(long long *A, long long *B, int m, int n);
 uint8_t conv2dFixedLongLong(long long* inp, long long* kernel, long long* bias, long long* out, int kernel_size, int in_channel, int out_channel, int h, int w, int padding, int stride_h, int stride_w);
 
 // @deprecated
-uint8_t estimateConvOutputSize(int kernel_size, int in_channel, int out_channel, int h, int w, int padding, int stride_h, int stride_w, int& out_h, int& out_w);
+uint8_t estimateConvOutputSize(int kernel_size, int in_channel, int out_channel, int h, int w, int padding, int stride_h, int stride_w, int* out_h, int* out_w);
 
 // pooling operations
 uint8_t avgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding);
 uint8_t maxPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding);
 
 // @deprecated
-uint8_t estimatePoolingOutputSize(int h, int w, int in_channel, int pool_size, int padding, int stride_h, int stride_w, int& out_h, int& out_w);
+uint8_t estimatePoolingOutputSize(int h, int w, int in_channel, int pool_size, int padding, int stride_h, int stride_w, int* out_h, int* out_w);
 
 uint8_t globalAvgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel);
 

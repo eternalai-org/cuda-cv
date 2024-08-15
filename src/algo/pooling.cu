@@ -274,46 +274,6 @@ uint8_t estimatePoolingOutputSize(
     int h, int w, int in_channel,
     int pool_size, int padding, 
     int stride_h, int stride_w,
-    int& out_h, int& out_w
-)
-{
-    if (stride_h <= 0)
-    {
-        stride_h = pool_size;
-    }
-
-    if (stride_w <= 0)
-    {
-        stride_w = pool_size;
-    }
-
-    int pad_top = 0, pad_bottom = 0, pad_left = 0, pad_right = 0;
-
-    if (padding == 1)
-    {
-        int out_h = (h + stride_h - 1) / stride_h;
-        int out_w = (w + stride_w - 1) / stride_w;
-
-        int pad_h = max((out_h - 1) * stride_h + pool_size - h, 0);
-        int pad_w = max((out_w - 1) * stride_w + pool_size - w, 0);
-        
-        pad_top = pad_h / 2;
-        pad_bottom = pad_h - pad_top;
-        
-        pad_left = pad_w / 2;
-        pad_right = pad_w - pad_left;
-    }
-
-    out_w = (w + pad_left + pad_right - pool_size) / stride_w + 1;
-    out_h = (h + pad_top + pad_bottom - pool_size) / stride_h + 1;
-    return OK;
-}
-
-
-uint8_t estimatePoolingOutputSize_(
-    int h, int w, int in_channel,
-    int pool_size, int padding, 
-    int stride_h, int stride_w,
     int* out_h, int* out_w
 )
 {
@@ -351,6 +311,5 @@ uint8_t estimatePoolingOutputSize_(
 
     *out_w = (w + pad_left + pad_right - pool_size) / stride_w + 1;
     *out_h = (h + pad_top + pad_bottom - pool_size) / stride_h + 1;
-
     return OK;
 }
