@@ -123,7 +123,7 @@ if __name__ == '__main__':
     
     (tensor_out, shape_out) = abi_decode(template_out, deref)
     
-    dll.deallocate(out)
+    dll.deallocate_cpp_response(out)
     
     tensor_out = np.array([unpack_uint256(i) for i in tensor_out], dtype=np.float64).flatten().reshape(shape_out)
         
