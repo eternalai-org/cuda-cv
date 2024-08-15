@@ -19,7 +19,7 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 
     const std::vector<int64_t>& params = pack.params;
 
-    const std::vector<uint32_t>& inp = pack.tensors[0].shape(),
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape(),
                                  kernel = pack.tensors[1].shape(),
                                  bias = pack.tensors[2].shape();
 
@@ -34,9 +34,9 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], c_out = kernel[3], h_out, w_out;
     uint32_t kh = kernel[0], kw = kernel[1], padding = params[2], stride_h = params[0], stride_w = params[1];
-    estimateConvOutputSize(kh, c_in, c_out, h_in, w_in, padding, stride_h, stride_w, h_out, w_out);
+    estimateConvOutputSize_(kh, c_in, c_out, h_in, w_in, padding, stride_h, stride_w, &h_out, &w_out);
 
-    std::vector<uint32_t> out_shape = {h_out, w_out, c_out};
+    std::vector<uint64_t> out_shape = {h_out, w_out, c_out};
     int64_t* out = new int64_t[h_out * w_out * c_out];
 
     __conv2dFixedLongLong(
@@ -74,7 +74,7 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     }
 
     const std::vector<int64_t>& params = pack.params;
-    const std::vector<uint32_t>& inp = pack.tensors[0].shape();
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
 
     if (params.size() != 5)
     {
@@ -85,11 +85,11 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
-    estimatePoolingOutputSize(
-        h_in, w_in, c_in, kh, padding, stride_h, stride_w, h_out, w_out
+    estimatePoolingOutputSize_(
+        h_in, w_in, c_in, kh, padding, stride_h, stride_w, &h_out, &w_out
     );
 
-    std::vector<uint32_t> out_shape = {h_out, w_out, c_in};
+    std::vector<uint64_t> out_shape = {h_out, w_out, c_in};
     int64_t* out = new int64_t[h_out * w_out * c_in];
 
     __maxPoolingFixedLongLong(
@@ -123,7 +123,7 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     }
 
     const std::vector<int64_t>& params = pack.params;
-    const std::vector<uint32_t>& inp = pack.tensors[0].shape();
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
 
     if (params.size() != 5)
     {
@@ -134,11 +134,11 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
-    estimatePoolingOutputSize(
-        h_in, w_in, c_in, kh, padding, stride_h, stride_w, h_out, w_out
+    estimatePoolingOutputSize_(
+        h_in, w_in, c_in, kh, padding, stride_h, stride_w, &h_out, &w_out
     );
 
-    std::vector<uint32_t> out_shape = {h_out, w_out, c_in};
+    std::vector<uint64_t> out_shape = {h_out, w_out, c_in};
     int64_t* out = new int64_t[h_out * w_out * c_in];
 
     __avgPoolingFixedLongLong(
@@ -195,7 +195,7 @@ uint8_t* matmul_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
         return nullptr;
     }
 
-    std::vector<uint32_t> out_shape = {h1, w2};
+    std::vector<uint64_t> out_shape = {h1, w2};
     int64_t* out = new int64_t[h1 * w2];  
 
     __maxmulFixedLongLong(
@@ -229,7 +229,7 @@ uint8_t* elementwise_add_call(const operation_pack& pack, int32_t* length_out, u
     }
 
     int prod1 = 1, prod2 = 1;
-    const std::vector<uint32_t>& s1 = pack.tensors[0].shape(),
+    const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
     for (const int& x: s1)
@@ -282,7 +282,7 @@ uint8_t* elementwise_mul_call(const operation_pack& pack, int32_t* length_out, u
     }
 
     int prod1 = 1, prod2 = 1;
-    const std::vector<uint32_t>& s1 = pack.tensors[0].shape(),
+    const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
     for (const int& x: s1)
@@ -335,7 +335,7 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
     }
 
     int prod1 = 1, prod2 = 1;
-    const std::vector<uint32_t>& s1 = pack.tensors[0].shape(),
+    const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
     for (const int& x: s1)
@@ -388,7 +388,7 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
     }
 
     int prod1 = 1, prod2 = 1;
-    const std::vector<uint32_t>& s1 = pack.tensors[0].shape(),
+    const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
     for (const int& x: s1)
@@ -451,7 +451,7 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
         return nullptr;
     }
 
-    const std::vector<uint32_t>& inp = pack.tensors[0].shape(),
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape(),
                                  ma = pack.tensors[1].shape(),
                                  mv = pack.tensors[2].shape(),
                                  gama = pack.tensors[3].shape(),
@@ -503,17 +503,20 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
 uint8_t* layer_norm_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* zscore_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* min_max_scale_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
@@ -526,7 +529,7 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
         return nullptr;
     }
 
-    const std::vector<int32_t>& params = pack.params;
+    const std::vector<int64_t>& params = pack.params;
 
     if (params.size() == 0)
     {
@@ -535,7 +538,7 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
     }
 
     int64_t** inp_tensors = new int64_t*[n_tensors];
-    int32_t** shapes = new int32_t*[n_tensors];
+    int64_t** shapes = new int64_t*[n_tensors];
     int common_dims = pack.params[0];
 
 
@@ -545,9 +548,9 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
         shapes[i] = &pack.tensors[i].shape()[0];
     }
 
-    std::vector<uint32_t> out_shape(common_dims, 0);
+    std::vector<uint64_t> out_shape(common_dims, 0);
 
-    if (estimateConcatenate(shapes, params[0], common_dims, n_tensors, &out_shape[0]))
+    if (estimateConcatenate_dummy(shapes, params[0], common_dims, n_tensors, &out_shape[0]))
     {
         *_error = true;
         delete[] inp_tensors;
@@ -556,18 +559,19 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
     }
     
     int32_t prod = 1;
+
     for (const int& x: out_shape)
     {
         prod *= x;
     }
 
     int64_t* out = new int64_t[prod];
-    __concatenate(
+    __concatenate_dummy(
         inp_tensors, 
         out, 
         shapes, 
-        n_tensors, 
         params[0], 
+        common_dims, 
         n_tensors,
         _error
     );
@@ -594,62 +598,214 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
 
 uint8_t* relu_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    int n_tensor = pack.tensors.size();
+    
+    if (n_tensor != 1)
+    {
+        *_error = true;
+        return nullptr;
+    }
 
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    uint64_t prod = 1;
+    
+    for (const int& x: inp)
+    {
+        prod *= x;
+    }
+
+    int64_t* out = new int64_t[prod];
+    __reluFixedLongLong(
+        pack.tensors[0].data(), 
+        out, 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* tanh_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    int n_tensor = pack.tensors.size();
+    
+    if (n_tensor != 1)
+    {
+        *_error = true;
+        return nullptr;
+    }
 
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    uint64_t prod = 1;
+    
+    for (const int& x: inp)
+    {
+        prod *= x;
+    }
+
+    int64_t* out = new int64_t[prod];
+    __tanhFixedLongLong(
+        pack.tensors[0].data(), 
+        out, 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* sigmoid_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    int n_tensor = pack.tensors.size();
+    
+    if (n_tensor != 1)
+    {
+        *_error = true;
+        return nullptr;
+    }
 
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    uint64_t prod = 1;
+    
+    for (const int& x: inp)
+    {
+        prod *= x;
+    }
+
+    int64_t* out = new int64_t[prod];
+    __sigmoidFixedLongLong(
+        pack.tensors[0].data(), 
+        out, 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* softmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    int n_tensor = pack.tensors.size();
+    
+    if (n_tensor != 1)
+    {
+        *_error = true;
+        return nullptr;
+    }
 
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    uint64_t prod = 1;
+    
+    for (const int& x: inp)
+    {
+        prod *= x;
+    }
+
+    int64_t* out = new int64_t[prod];
+    __softmaxFixedLongLong(
+        pack.tensors[0].data(), 
+        out, 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* logsoftmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* softmax2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* reduction_max_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* reduction_min_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* reduction_mean_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* reduction_sum_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* reduction_argmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* reduction_argmin_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 
@@ -673,12 +829,12 @@ std::vector<int64_t> read_params(const int64_t* data, uint8_t *__error)
     return params;
 }
 
-std::vector<std::vector<uint32_t >> read_shapes(const int64_t* data, uint8_t *__error)
+std::vector<std::vector<uint64_t >> read_shapes(const int64_t* data, uint8_t *__error)
 {
     const int64_t* data3 = data + 3;
     int64_t shapes_offset = data3[8] >> 3;
     int32_t n_tensor = data3[shapes_offset]; shapes_offset += 4;
-    std::vector<std::vector<uint32_t>> shapes(n_tensor, std::vector<uint32_t>());
+    std::vector<std::vector<uint64_t>> shapes(n_tensor, std::vector<uint64_t>());
 
     for (int i = 0; i < n_tensor; ++i)
     {
@@ -705,7 +861,7 @@ std::vector<TensorWrapper> read_tensors(const int64_t* data, uint8_t *__error)
 {
     const int64_t* data3 = data + 3;
     int64_t tensors_offset = data3[12] >> 3;
-    std::vector<std::vector<uint32_t>> shapes = read_shapes(data, __error);
+    std::vector<std::vector<uint64_t>> shapes = read_shapes(data, __error);
 
     if (*__error || data3[tensors_offset] != shapes.size())
     {
@@ -753,7 +909,7 @@ operation_pack abi_decode_op(const int64_t* inp, uint8_t *__error)
 
 uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
 {
-    const std::vector<uint32_t>& shape = tensor.shape();
+    const std::vector<uint64_t>& shape = tensor.shape();
     const int64_t* data = tensor.data();
 
     int32_t prod = 1;
@@ -997,7 +1153,7 @@ uint8_t* cuda_execute_operation(
 }
 
 // extern "C"
-void deallocate(uint8_t* payload)
+void deallocate_cpp_response(uint8_t* payload)
 {
     if (payload != nullptr)
     {

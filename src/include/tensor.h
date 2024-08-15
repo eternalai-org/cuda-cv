@@ -7,13 +7,13 @@
 #include <memory>
 
 class  TensorWrapper {
-    std::vector<uint32_t> mshape;
+    std::vector<uint64_t> mshape;
     int64_t* mdata;
 
 public:
     TensorWrapper() : mshape({}), mdata(nullptr) {}
 
-    TensorWrapper(const std::vector<uint32_t>& shape, const int64_t* data) : mshape(shape) { 
+    TensorWrapper(const std::vector<uint64_t>& shape, const int64_t* data) : mshape(shape) { 
         uint64_t prod = 1;
 
         for (const auto& dim : mshape) {
@@ -29,7 +29,7 @@ public:
         mdata = other.mdata;
     }
 
-    TensorWrapper& assign(int64_t* data, const std::vector<uint32_t>& shape)
+    TensorWrapper& assign(int64_t* data, const std::vector<uint64_t>& shape)
     {
         this->mdata = data;
         this->mshape = shape;
@@ -41,7 +41,7 @@ public:
         return mshape.size();
     }
 
-    std::vector<uint32_t> shape() const 
+    std::vector<uint64_t> shape() const 
     {
         return mshape;
     }
@@ -50,9 +50,9 @@ public:
         return mdata;
     }
 
-    TensorWrapper& reshape(std::vector<uint32_t> shape)
+    TensorWrapper& reshape(std::vector<uint64_t> shape)
     {
-        uint32_t prod_1 = 1, prod_2 = 1;
+        uint64_t prod_1 = 1, prod_2 = 1;
 
         for (const auto& dim : mshape) {
             prod_1 *= dim;

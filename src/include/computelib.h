@@ -61,7 +61,7 @@ enum opcode
 };
 
 // abi operations
-uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t& length);
+uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length);
 operation_pack abi_decode_op(const int64_t* inp, uint8_t *__error);
 
 uint8_t* conv2d_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
@@ -110,7 +110,7 @@ uint8_t* cuda_execute_operation(
     uint8_t* has_eerror
 );
 
-void deallocate(uint8_t* payload);
+void deallocate_cpp_response(uint8_t* payload);
 
 #if __cplusplus
 }
