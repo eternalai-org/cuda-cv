@@ -941,7 +941,6 @@ uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
     }
 
     uint8_t* out = new uint8_t[*length];
-    std::cout << "Bytes Length: " << *length << std::endl;
 
     for (int i = 0, j = 0; i < short_length; ++i, j += 8)
     {
