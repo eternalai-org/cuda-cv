@@ -93,8 +93,9 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     int64_t* out = new int64_t[h_out * w_out * c_in];
 
     __maxPoolingFixedLongLong(
-        pack.tensors[0].data(),
-        out, h_in, w_in, c_in, kh, 
+        reinterpret_cast<long long*>(pack.tensors[0].data()),
+        reinterpret_cast<long long*>(out), 
+        h_in, w_in, c_in, kh, 
         stride_h, stride_w, padding, 
         _error
     );
@@ -199,9 +200,10 @@ uint8_t* matmul_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
     int64_t* out = new int64_t[h1 * w2];  
 
     __maxmulFixedLongLong(
-        pack.tensors[0].data(), 
-        pack.tensors[1].data(), 
-        out, h1, w1, w2, 
+        reinterpret_cast<long long*>(pack.tensors[0].data()), 
+        reinterpret_cast<long long*>(pack.tensors[1].data()), 
+        reinterpret_cast<long long*>(out), 
+        h1, w1, w2, 
         _error
     );
 
@@ -250,9 +252,9 @@ uint8_t* elementwise_add_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matAddLongLong(
-        pack.tensors[0].data(), 
-        pack.tensors[1].data(), 
-        out, 
+        reinterpret_cast<long long*>(pack.tensors[0].data()), 
+        reinterpret_cast<long long*>(pack.tensors[1].data()), 
+        reinterpret_cast<long long*>(out), 
         1,
         prod1, 
         _error
@@ -303,9 +305,9 @@ uint8_t* elementwise_mul_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matMulLongLong(
-        pack.tensors[0].data(), 
-        pack.tensors[1].data(), 
-        out, 
+        reinterpret_cast<long long*>(pack.tensors[0].data()), 
+        reinterpret_cast<long long*>(pack.tensors[1].data()), 
+        reinterpret_cast<long long*>(out), 
         1,
         prod1, 
         _error
@@ -356,9 +358,9 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matSubLongLong(
-        pack.tensors[0].data(), 
-        pack.tensors[1].data(), 
-        out, 
+        reinterpret_cast<long long*>(pack.tensors[0].data()), 
+        reinterpret_cast<long long*>(pack.tensors[1].data()), 
+        reinterpret_cast<long long*>(out), 
         1,
         prod1, 
         _error
@@ -409,9 +411,9 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matDivLongLong(
-        pack.tensors[0].data(), 
-        pack.tensors[1].data(), 
-        out, 
+        reinterpret_cast<long long*>(pack.tensors[0].data()), 
+        reinterpret_cast<long long*>(pack.tensors[1].data()), 
+        reinterpret_cast<long long*>(out), 
         1,
         prod1, 
         _error
@@ -475,12 +477,12 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
     int64_t* out = new int64_t[h_in * w_in * c_in];
     __batchNormalizeFixedLongLong(
-        pack.tensors[0].data(), // inp
-        out, 
-        pack.tensors[1].data(), // ma
-        pack.tensors[2].data(), // mv
-        pack.tensors[3].data(), // gama
-        pack.tensors[4].data(), // beta 
+        reinterpret_cast<long long*>(pack.tensors[0].data()), // inp
+        reinterpret_cast<long long*>(out), 
+        reinterpret_cast<long long*>(pack.tensors[1].data()), // ma
+        reinterpret_cast<long long*>(pack.tensors[2].data()), // mv
+        reinterpret_cast<long long*>(pack.tensors[3].data()), // gama
+        reinterpret_cast<long long*>(pack.tensors[4].data()), // beta 
         params[0], // epsilon
         h_in, w_in, c_in, 
         _error
@@ -545,7 +547,7 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
     for (int i = 0; i < n_tensors; ++i)
     {
         inp_tensors[i] = pack.tensors[i].data();
-        shapes[i] = &pack.tensors[i].shape()[0];
+        shapes[i] = reinterpret_cast<int64_t*>(&pack.tensors[i].shape()[0]);
     }
 
     std::vector<uint64_t> out_shape(common_dims, 0);
@@ -567,9 +569,9 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
 
     int64_t* out = new int64_t[prod];
     __concatenate_dummy(
-        inp_tensors, 
-        out, 
-        shapes, 
+        reinterpret_cast<long long**>(inp_tensors), 
+        reinterpret_cast<long long*>(out), 
+        reinterpret_cast<long long**>(shapes), 
         params[0], 
         common_dims, 
         n_tensors,
@@ -912,17 +914,17 @@ uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
     const std::vector<uint64_t>& shape = tensor.shape();
     const int64_t* data = tensor.data();
 
-    int32_t prod = 1;
+    int64_t prod = 1;
     for (const int& x: shape)
     {
         prod *= x;
     }
 
-    int padded_prod = ((prod + 3) >> 2) << 2;
+    int64_t padded_prod = ((prod + 3) >> 2) << 2;
 
     // (2 offsets, 2 counts and a list of number) * 32 bytes + data (8 bytes) * prod
     *length = ((4 + shape.size()) << 5) + (padded_prod << 3); // bytes
-    int short_length = *length >> 3;
+    int64_t short_length = *length >> 3;
     int64_t* out_int64 = new int64_t[short_length];
 
     std::memset(out_int64, 0, short_length << 3);
@@ -933,16 +935,13 @@ uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
     out_int64[11] = padded_prod >> 2;
 
     out_int64[(out_int64[7] >> 3) + 3] = shape.size();
-    for (
-        int i = 0, offset = (out_int64[7] >> 3) + 4; 
-        i < shape.size(); 
-        ++i, offset += 4
-    )
+    for (int i = 0, offset = (out_int64[7] >> 3) + 7; i < shape.size(); ++i, offset += 4)
     {
-        out_int64[offset + 3] = shape[i];
+        out_int64[offset] = shape[i];
     }
 
     uint8_t* out = new uint8_t[*length];
+    std::cout << "Bytes Length: " << *length << std::endl;
 
     for (int i = 0, j = 0; i < short_length; ++i, j += 8)
     {
@@ -959,7 +958,6 @@ uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
     delete[] out_int64;
     return out;
 }
-
 
 
 // extern "C"
@@ -1009,9 +1007,8 @@ uint8_t* cuda_execute_operation(
         if (pack.tensors.size() == 0) {
             return wrap_return_fn();
         }
-
-        uint8_t* out = abi_encode_tensor(pack.tensors[0], length_out);
-        return wrap_return_fn(out);
+        
+        return wrap_return_fn(abi_encode_tensor(pack.tensors[0], length_out));
     }
     
     if (pack.op == opcode::MATMUL)
