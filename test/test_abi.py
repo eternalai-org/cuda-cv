@@ -44,7 +44,7 @@ def create_random_tensor():
 def create_random_test_case():
     tensor, shapes = create_random_tensor()
     
-    opcode, random_params = 27, []
+    opcode, random_params = 27, [random.randint(0, 100) for _ in range(random.randint(0, 10))]
     return opcode, random_params, [shapes], [tensor]    
 
 def compare_tensors(t1, t2):
