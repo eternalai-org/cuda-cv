@@ -3,7 +3,7 @@ header = -Iinclude
 header_files = include/fixedlonglong32x32.cuh include/functional.h
 optimization = -O2
 compile_flags = -Xcompiler="-fpermissive"
-CPP_VERSION = 
+CPP_VERSION = -std=c++17
 
 kernels.o: algo/kernels.cu
 	nvcc --compiler-options -fPIC -c -o kernels.o  algo/kernels.cu \
@@ -68,6 +68,14 @@ exec: main
 
 debug: libcomputelib.so
 	python3 ../test/test_abi.py
+
+release: libcomputelib.so
+	if [ -d "build" ]; then rm -rf build; fi
+	mkdir build
+	mkdir build/include
+	mv libcomputelib.so build
+	cp include/operations.cuh build/include
+	cp include/computelib.h build/include
 
 clean:
 	rm -f *.o *.so
