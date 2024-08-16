@@ -3,13 +3,11 @@
 #include <assert.h>
 #include <string.h>
 
-#include <functional.h>
 #include <fixedlonglong32x32.cuh>
 #include <kernels.cuh>
+#include <operations.cuh>
 
-
-
-void concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n)
+void __concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n, uint8_t* error)
 {
     long long* out_shape = new long long[ndims];
 
@@ -40,12 +38,12 @@ void concatenate(long long* inp, long long* out, long long* shapes, long long ax
         i_offset += out_h * shapes[axis + ndims * i] * magic;
     }
 
-    for (int i = 0; i < out_h; ++i)
+    for (int i = 0, cnt; i < out_h; ++i)
     {
         for (int j = 0; j < n; ++j)
         {
-            int cnt = shapes[axis + ndims * j] * magic;
-            memcpy(out + o_offset, inp + starts[j] + i * cnt, cnt * sizeof(long long));
+            cnt = shapes[axis + ndims * j] * magic;
+            memcpy(out + o_offset, inp + starts[j] + i * cnt, cnt << 3);
             o_offset += cnt;
         }
     }
@@ -56,11 +54,48 @@ void concatenate(long long* inp, long long* out, long long* shapes, long long ax
     delete[] starts;
 }
 
-bool estimateConcatenate(long long* shapes, long long axis, long long ndims, long long n, long long* out)
+
+void __concatenate_dummy(long long** inp, long long* out, long long** shapes, long long axis, long long ndims, long long n, uint8_t* error)
+{
+    long long* out_shape = new long long[ndims];
+
+    if (!estimateConcatenate_dummy(shapes, axis, ndims, n, out_shape))
+    {
+       delete[] out_shape;
+       return;
+    }
+
+    int out_h = 1, out_w = 1;
+    for (int i = 0; i < axis; ++i)
+    {
+        out_h *= out_shape[i];
+    }
+
+    for (int i = axis; i < ndims; ++i)
+    {
+        out_w *= out_shape[i];
+    }
+
+    for (int i = 0, cnt, o_offset = 0, magic = out_w / out_shape[axis]
+        ; i < out_h; ++i
+    )
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            cnt = shapes[j][axis] * magic;
+            memcpy(out + o_offset, inp[j] + i * cnt, cnt << 3);
+            o_offset += cnt;
+        }
+    }
+
+    delete[] out_shape;
+}
+
+uint8_t estimateConcatenate(long long* shapes, long long axis, long long ndims, long long n, long long* out)
 {
     if (ndims <= 0 || n <= 0 || axis < 0 || axis >= ndims)
     {
-        return false;
+        return ERROR;
     }
 
     memset(out, 0x00, ndims * sizeof(long long));
@@ -83,10 +118,43 @@ bool estimateConcatenate(long long* shapes, long long axis, long long ndims, lon
         {
             if (shapes[i] != shapes[j])
             {
-                return false;
+                return ERROR;
             }
         }
     }
 
-    return true;
+    return OK;
+}
+
+uint8_t estimateConcatenate_dummy(long long** shapes, long long axis, long long ndims, long long n, long long* out)
+{
+    // @todo: fix this
+
+    if (ndims <= 0 || n <= 0 || axis < 0 || axis >= ndims)
+    {
+        return ERROR;
+    }
+
+    memset(out, 0x00, ndims * sizeof(long long));
+
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < ndims; ++j)
+        {
+            if (j == axis)
+            {
+                out[j] += shapes[i][j];
+            }
+            else if (out[j] == 0)
+            {
+                out[j] = shapes[i][j];
+            }
+            else if (out[j] != shapes[i][j])
+            {
+                return ERROR;
+            }
+        }
+    }
+
+    return OK;
 }

@@ -2,16 +2,17 @@
 #include <cuda.h>
 #include <assert.h>
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
+#include <operations.cuh>
 #include <kernels.cuh>
 
 ////////////////////// implementation ///////////////////////// 
 
-void conv2dFixedLongLong(
+void __conv2dFixedLongLong(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int kernel_size, int in_channel, int out_channel, // kernel properties
     int h, int w, // spatial size of inp,
     int padding, int stride_h, int stride_w // padding: same(0) or valid(1)
+    , uint8_t* error
 )
 {
 
@@ -116,13 +117,18 @@ void conv2dFixedLongLong(
     cudaFree(d_gpu);
 }     
 
-void estimateConvOutputSize(
+uint8_t estimateConvOutputSize(
     int kernel_size, int in_channel, int out_channel, // kernel properties
     int h, int w, // spatial size of inp,
     int padding, int stride_h, int stride_w, // padding: same(0) or valid(1)
-    int& out_h, int& out_w // spatial size of out
+    int* out_h, int* out_w // spatial size of out
 )
 {
+    if (!out_h || !out_w)
+    {
+        return ERROR;
+    }
+
     int pad_top = 0, pad_bottom = 0, pad_left = 0, pad_right = 0;
 
     if (padding == 1)
@@ -140,6 +146,8 @@ void estimateConvOutputSize(
         pad_right = pad_w - pad_left;
     }
 
-    out_w = (w + pad_left + pad_right - kernel_size) / stride_w + 1;
-    out_h = (h + pad_top + pad_bottom - kernel_size) / stride_h + 1;
+    *out_w = (w + pad_left + pad_right - kernel_size) / stride_w + 1;
+    *out_h = (h + pad_top + pad_bottom - kernel_size) / stride_h + 1;
+
+    return OK;
 }

@@ -4,8 +4,8 @@
 #include <assert.h>
 
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
 #include <kernels.cuh>
+#include <operations.cuh>
 
 
 ////////////////////// kernels ///////////////////////// 
@@ -13,7 +13,7 @@
 
 ////////////////////// implementations ///////////////////////// 
 
-void matAddLongLong(long long *A, long long *B, long long *C, int m, int n) {
+void __matAddLongLong(long long *A, long long *B, long long *C, int m, int n, uint8_t* error) {
     // Allocate device memory:
     long long *gpu;
     const int N = m * n;
@@ -31,7 +31,7 @@ void matAddLongLong(long long *A, long long *B, long long *C, int m, int n) {
     cudaFree(gpu);
 }
 
-void matSubLongLong(long long *A, long long *B, long long *C, int m, int n) {
+void __matSubLongLong(long long *A, long long *B, long long *C, int m, int n, uint8_t* error) {
     // Allocate device memory:
     long long *gpu;
     const int N = m * n;
@@ -49,7 +49,7 @@ void matSubLongLong(long long *A, long long *B, long long *C, int m, int n) {
     cudaFree(gpu);
 }
 
-void matMulLongLong(long long *A, long long *B, long long *C, int m, int n) {
+void __matMulLongLong(long long *A, long long *B, long long *C, int m, int n, uint8_t* error) {
     // Allocate device memory:
     long long *gpu;
     const int N = m * n;
@@ -67,7 +67,7 @@ void matMulLongLong(long long *A, long long *B, long long *C, int m, int n) {
     cudaFree(gpu);
 }
 
-void matDivLongLong(long long *A, long long *B, long long *C, int m, int n) {
+void __matDivLongLong(long long *A, long long *B, long long *C, int m, int n, uint8_t* error) {
     // Allocate device memory:
     long long *gpu;
     const int N = m * n;
@@ -86,7 +86,7 @@ void matDivLongLong(long long *A, long long *B, long long *C, int m, int n) {
 }
 
 
-void matSqrtLongLong(long long *A, long long *B, int m, int n) {
+void __matSqrtLongLong(long long *A, long long *B, int m, int n, uint8_t* error) {
     // Allocate device memory:
     long long *gpu;
     const int N = m * n;

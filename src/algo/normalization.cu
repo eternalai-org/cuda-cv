@@ -4,10 +4,10 @@
 #include <assert.h>
 
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
 #include <kernels.cuh>
+#include <operations.cuh>
 
-void layerNormalizeFixedLongLong(
+void __layerNormalizeFixedLongLong(
     long long *X, // input of shape (m, n, c) 
     long long *Y, // output of shape (m, n, c)
     long long *ma, // moving average (c)
@@ -16,12 +16,13 @@ void layerNormalizeFixedLongLong(
     long long *beta, // offset (c)
     long long epsilon, // epsilon 
     int h, int w, int c  // m, n, c 
+    , uint8_t* error
 ) 
 {
     
 }
 
-void batchNormalizeFixedLongLong(
+void __batchNormalizeFixedLongLong(
     long long *X, // input of shape (m, n, c) 
     long long *Y, // output of shape (m, n, c)
     long long *ma, // moving average (c)
@@ -30,6 +31,7 @@ void batchNormalizeFixedLongLong(
     long long *beta, // offset (c)
     long long epsilon, // epsilon 
     int h, int w, int c  // m, n, c 
+    , uint8_t* error
 ) 
 {
     long long *gpu;

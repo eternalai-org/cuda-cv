@@ -4,11 +4,12 @@
 #include <assert.h>
 
 #include <fixedlonglong32x32.cuh>
-#include <functional.h>
 #include <kernels.cuh>
+#include <helpers.cuh>
+#include <operations.cuh>
 
 // softmax interface
-void softmaxFixedLongLong(long long *A, long long* B, int m) 
+void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error) 
 {
     long long *gpu_a, *gpu_b, *buffer_tmp;
 
@@ -40,7 +41,7 @@ void softmaxFixedLongLong(long long *A, long long* B, int m)
 }
 
 // sigmoid interface
-void sigmoidFixedLongLong(long long *A, long long* B, int m) 
+void __sigmoidFixedLongLong(long long *A, long long* B, int m, uint8_t* error) 
 {  
     long long *gpu_a, *gpu_b;
     
@@ -58,7 +59,7 @@ void sigmoidFixedLongLong(long long *A, long long* B, int m)
 }
 
 // tanh interface
-void tanhFixedLongLong(long long *A, long long *B, int m) 
+void __tanhFixedLongLong(long long *A, long long *B, int m, uint8_t* error) 
 {
     long long *gpu_a, *gpu_b;
     
@@ -76,7 +77,7 @@ void tanhFixedLongLong(long long *A, long long *B, int m)
 }
 
 // relu interface
-void reluFixedLongLong(long long *A, long long *B, int m) 
+void __reluFixedLongLong(long long *A, long long *B, int m, uint8_t* error) 
 {
     long long *gpu_a, *gpu_b;
     
@@ -94,7 +95,7 @@ void reluFixedLongLong(long long *A, long long *B, int m)
 }
 
 // relu interface
-void relu3DFixedLongLong(long long *A, long long *B, int h, int w, int c) 
+void __relu3DFixedLongLong(long long *A, long long *B, int h, int w, int c, uint8_t* error) 
 {
     long long* gpu;
     const int N = h * w * c;
@@ -111,7 +112,7 @@ void relu3DFixedLongLong(long long *A, long long *B, int h, int w, int c)
 }
 
 // relu interface
-void sigmoid3DFixedLongLong(long long *A, long long *B, int h, int w, int c) 
+void __sigmoid3DFixedLongLong(long long *A, long long *B, int h, int w, int c, uint8_t* error) 
 {
     long long* gpu;
     const int N = h * w * c;
@@ -129,7 +130,7 @@ void sigmoid3DFixedLongLong(long long *A, long long *B, int h, int w, int c)
 
 
 // relu interface
-void tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c) 
+void __tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c, uint8_t* error) 
 {
     long long* gpu;
     const int N = h * w * c;
@@ -145,7 +146,7 @@ void tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c)
     cudaFree(gpu);
 }
 
-void softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c)
+void __softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c, uint8_t* error)
 {
     memset(B, 0, sizeof(long long) * h * w * c);
 }
