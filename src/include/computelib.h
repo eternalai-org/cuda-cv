@@ -57,7 +57,8 @@ enum opcode
     REDUCTION_ARGMIN = 26, // 26
 
     // misc
-    DROPOUT = 27 // 27
+    DROPOUT = 27, // 27
+    GLOBAL_AVGPOOLING2D = 28 // 28
 };
 
 // abi operations
@@ -91,6 +92,8 @@ uint8_t* reduction_mean_call(const operation_pack& pack, uint32_t* length_out, u
 uint8_t* reduction_sum_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
 uint8_t* reduction_argmax_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
 uint8_t* reduction_argmin_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
+uint8_t* dropout_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
+uint8_t* global_avgpooling2d_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
 
 uint8_t* _execute(
     uint8_t* payload_in, // bytes: opcode, params, shapes, tensors

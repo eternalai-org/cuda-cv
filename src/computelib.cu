@@ -8,6 +8,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 
 uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
@@ -34,16 +35,16 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], c_out = kernel[3], h_out, w_out;
     uint32_t kh = kernel[0], kw = kernel[1], padding = params[2], stride_h = params[0], stride_w = params[1];
-    estimateConvOutputSize(kh, c_in, c_out, h_in, w_in, padding, stride_h, stride_w, &h_out, &w_out);
+    estimateConvOutputSize(kh, c_in, c_out, h_in, w_in, padding, stride_h, stride_w, (int*) &h_out, (int*) &w_out);
 
     std::vector<uint64_t> out_shape = {h_out, w_out, c_out};
     int64_t* out = new int64_t[h_out * w_out * c_out];
 
     __conv2dFixedLongLong(
-        pack.tensors[0].data(), 
-        pack.tensors[1].data(), 
-        pack.tensors[2].data(), 
-        out, 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)pack.tensors[1].data(), 
+        (long long*)pack.tensors[2].data(), 
+        (long long*)out, 
         kw, c_in, c_out, 
         h_in, h_out, padding, 
         stride_h, stride_w, 
@@ -86,15 +87,15 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
     estimatePoolingOutputSize(
-        h_in, w_in, c_in, kh, padding, stride_h, stride_w, &h_out, &w_out
+        h_in, w_in, c_in, kh, padding, stride_h, stride_w, (int*)&h_out, (int*)&w_out
     );
 
     std::vector<uint64_t> out_shape = {h_out, w_out, c_in};
     int64_t* out = new int64_t[h_out * w_out * c_in];
 
     __maxPoolingFixedLongLong(
-        reinterpret_cast<long long*>(pack.tensors[0].data()),
-        reinterpret_cast<long long*>(out), 
+        (long long*) pack.tensors[0].data(),
+        (long long*) out, 
         h_in, w_in, c_in, kh, 
         stride_h, stride_w, padding, 
         _error
@@ -136,15 +137,15 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
     estimatePoolingOutputSize(
-        h_in, w_in, c_in, kh, padding, stride_h, stride_w, &h_out, &w_out
+        h_in, w_in, c_in, kh, padding, stride_h, stride_w, (int*)&h_out, (int*)&w_out
     );
 
     std::vector<uint64_t> out_shape = {h_out, w_out, c_in};
     int64_t* out = new int64_t[h_out * w_out * c_in];
 
     __avgPoolingFixedLongLong(
-        pack.tensors[0].data(),
-        out, h_in, w_in, c_in, kh, 
+        (long long*)pack.tensors[0].data(),
+        (long long*)out, h_in, w_in, c_in, kh, 
         stride_h, stride_w, padding, 
         _error
     );
@@ -200,9 +201,9 @@ uint8_t* matmul_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
     int64_t* out = new int64_t[h1 * w2];  
 
     __maxmulFixedLongLong(
-        reinterpret_cast<long long*>(pack.tensors[0].data()), 
-        reinterpret_cast<long long*>(pack.tensors[1].data()), 
-        reinterpret_cast<long long*>(out), 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)pack.tensors[1].data(), 
+        (long long*)out, 
         h1, w1, w2, 
         _error
     );
@@ -252,9 +253,9 @@ uint8_t* elementwise_add_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matAddLongLong(
-        reinterpret_cast<long long*>(pack.tensors[0].data()), 
-        reinterpret_cast<long long*>(pack.tensors[1].data()), 
-        reinterpret_cast<long long*>(out), 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)pack.tensors[1].data(), 
+        (long long*)out, 
         1,
         prod1, 
         _error
@@ -305,9 +306,9 @@ uint8_t* elementwise_mul_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matMulLongLong(
-        reinterpret_cast<long long*>(pack.tensors[0].data()), 
-        reinterpret_cast<long long*>(pack.tensors[1].data()), 
-        reinterpret_cast<long long*>(out), 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)pack.tensors[1].data(), 
+        (long long*)out, 
         1,
         prod1, 
         _error
@@ -358,9 +359,9 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matSubLongLong(
-        reinterpret_cast<long long*>(pack.tensors[0].data()), 
-        reinterpret_cast<long long*>(pack.tensors[1].data()), 
-        reinterpret_cast<long long*>(out), 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)pack.tensors[1].data(), 
+        (long long*)out, 
         1,
         prod1, 
         _error
@@ -411,9 +412,9 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
     int64_t* out = new int64_t[prod1];
     __matDivLongLong(
-        reinterpret_cast<long long*>(pack.tensors[0].data()), 
-        reinterpret_cast<long long*>(pack.tensors[1].data()), 
-        reinterpret_cast<long long*>(out), 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)pack.tensors[1].data(), 
+        (long long*)out, 
         1,
         prod1, 
         _error
@@ -477,12 +478,12 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
     int64_t* out = new int64_t[h_in * w_in * c_in];
     __batchNormalizeFixedLongLong(
-        reinterpret_cast<long long*>(pack.tensors[0].data()), // inp
-        reinterpret_cast<long long*>(out), 
-        reinterpret_cast<long long*>(pack.tensors[1].data()), // ma
-        reinterpret_cast<long long*>(pack.tensors[2].data()), // mv
-        reinterpret_cast<long long*>(pack.tensors[3].data()), // gama
-        reinterpret_cast<long long*>(pack.tensors[4].data()), // beta 
+        (long long*)pack.tensors[0].data(), // inp
+        (long long*)out, 
+        (long long*)pack.tensors[1].data(), // ma
+        (long long*)pack.tensors[2].data(), // mv
+        (long long*)pack.tensors[3].data(), // gama
+        (long long*)pack.tensors[4].data(), // beta 
         params[0], // epsilon
         h_in, w_in, c_in, 
         _error
@@ -547,12 +548,12 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
     for (int i = 0; i < n_tensors; ++i)
     {
         inp_tensors[i] = pack.tensors[i].data();
-        shapes[i] = reinterpret_cast<int64_t*>(&pack.tensors[i].shape()[0]);
+        shapes[i] = (int64_t*)(&pack.tensors[i].shape()[0]);
     }
 
     std::vector<uint64_t> out_shape(common_dims, 0);
 
-    if (estimateConcatenate_dummy(shapes, params[0], common_dims, n_tensors, &out_shape[0]))
+    if (estimateConcatenate_dummy((long long**)shapes, params[0], common_dims, n_tensors, (long long*)&out_shape[0]))
     {
         *_error = true;
         delete[] inp_tensors;
@@ -569,9 +570,9 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
 
     int64_t* out = new int64_t[prod];
     __concatenate_dummy(
-        reinterpret_cast<long long**>(inp_tensors), 
-        reinterpret_cast<long long*>(out), 
-        reinterpret_cast<long long**>(shapes), 
+        (long long**)inp_tensors, 
+        (long long*)out, 
+        (long long**)shapes, 
         params[0], 
         common_dims, 
         n_tensors,
@@ -618,8 +619,8 @@ uint8_t* relu_call(const operation_pack& pack, int32_t* length_out, uint8_t* _er
 
     int64_t* out = new int64_t[prod];
     __reluFixedLongLong(
-        pack.tensors[0].data(), 
-        out, 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)out, 
         prod, 
         _error
     );
@@ -659,8 +660,8 @@ uint8_t* tanh_call(const operation_pack& pack, int32_t* length_out, uint8_t* _er
 
     int64_t* out = new int64_t[prod];
     __tanhFixedLongLong(
-        pack.tensors[0].data(), 
-        out, 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)out, 
         prod, 
         _error
     );
@@ -700,8 +701,8 @@ uint8_t* sigmoid_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
 
     int64_t* out = new int64_t[prod];
     __sigmoidFixedLongLong(
-        pack.tensors[0].data(), 
-        out, 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)out, 
         prod, 
         _error
     );
@@ -741,8 +742,8 @@ uint8_t* softmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
 
     int64_t* out = new int64_t[prod];
     __softmaxFixedLongLong(
-        pack.tensors[0].data(), 
-        out, 
+        (long long*)pack.tensors[0].data(), 
+        (long long*)out, 
         prod, 
         _error
     );
@@ -808,6 +809,61 @@ uint8_t* reduction_argmin_call(const operation_pack& pack, int32_t* length_out, 
 {
     *_error = true;
     return nullptr;
+}
+
+uint8_t* dropout_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
+{
+    if (pack.tensors.size() != 1)
+    {
+        *_error = true;
+        return nullptr;
+    }
+
+    return abi_encode_tensor(pack.tensors[0], length_out);
+}
+
+uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
+{
+    if (pack.tensors.size() != 1 || pack.tensors[0].shape().size() < 3)
+    {
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    std::vector<uint64_t> out_shape;
+    
+    for (int i = 0; i < inp.size() - 3; ++i)
+    {
+        out_shape.push_back(inp[i]);
+    }
+
+    out_shape.push_back(inp.back());
+    
+    int64_t prod = std::accumulate(out_shape.begin(), out_shape.end(), 1, std::multiplies<int64_t>()); 
+    int64_t* buffer = new int64_t[prod];
+
+    __globalAvgPoolingFixedLongLong(
+        (long long*)pack.tensors[0].data(), 
+        (long long*)buffer, 
+        prod / out_shape.back(), 1,
+        out_shape.back(), 
+        _error
+    );
+
+    if (*_error)
+    {
+        delete[] buffer;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(out_shape, buffer), 
+        length_out
+    );
+
+    delete[] buffer;
+    return out_bytes;
 }
 
 
@@ -1000,15 +1056,6 @@ uint8_t* cuda_execute_operation(
     {
         return wrap_return_fn();
     }
-
-    if (pack.op == opcode::DROPOUT)
-    {
-        if (pack.tensors.size() == 0) {
-            return wrap_return_fn();
-        }
-        
-        return wrap_return_fn(abi_encode_tensor(pack.tensors[0], length_out));
-    }
     
     if (pack.op == opcode::MATMUL)
     {
@@ -1143,6 +1190,16 @@ uint8_t* cuda_execute_operation(
     if (pack.op == opcode::REDUCTION_ARGMIN)
     {
         return wrap_return_fn(reduction_argmin_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::DROPOUT)
+    {
+        return wrap_return_fn(dropout_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::GLOBAL_AVGPOOLING2D)
+    {
+        return wrap_return_fn(globalavgpooling_call(pack, length_out, _error));
     }
 
     return wrap_return_fn();

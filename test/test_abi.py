@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 import json
+from tensor import Tensor
 
 '''
 uint8_t* cuda_execute_operation(
@@ -18,35 +19,18 @@ uint8_t* cuda_execute_operation(
 
 dll = ctypes.CDLL(os.path.join(os.getcwd(), 'libcomputelib.so'))
 
-def compress_uint256(a1 = 0, a2 = 0, a3 = 0, a4 = 0):
-        return a4 + (a3 << 64) + (a2 << 128) + (a1 << 192)
-    
-def unpack_uint256(a):
-    a1 = (a >> 192) & 0xFFFFFFFFFFFFFFFF
-    a2 = (a >> 128) & 0xFFFFFFFFFFFFFFFF
-    a3 = (a >> 64) & 0xFFFFFFFFFFFFFFFF
-    a4 = a & 0xFFFFFFFFFFFFFFFF
-    
-    return a1, a2, a3, a4
-
-def chunked(l, n):
-    for i in range(0, len(l), n):
-        yield l[i:i+n]
-
 def create_random_tensor():
     shapes = [random.randint(1, 10) for _ in range(4)]
     flatten = np.prod(shapes)
 
-    tensor = (np.random.rand(flatten).astype(np.float64) * 100).astype(np.int64).tolist()
-    tensor = [compress_uint256(*i) for i in chunked(tensor, 4)]
-    
-    return tensor, shapes
+    tensor = (np.random.rand(flatten).astype(np.float64) * 100).astype(np.int64)
+    return Tensor(tensor, shapes)
 
 def create_random_test_case():
-    tensor, shapes = create_random_tensor()
+    tensor = create_random_tensor()
     
     opcode, random_params = 27, [random.randint(0, 100) for _ in range(random.randint(0, 10))]
-    return opcode, random_params, [shapes], [tensor]    
+    return opcode, random_params, tensor    
 
 def compare_tensors(t1, t2):
     return all(x == y for x, y in zip(t1, t2))
@@ -54,8 +38,11 @@ def compare_tensors(t1, t2):
 
 def run_case(*args):
     sample = create_random_test_case()
-    inp = abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'uint256[][]'), sample)
-    
+    opcode, params, tensor = sample
+    shapes, tensor_data = tensor.shape, tensor.compress()
+
+    inp = abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'uint256[][]'), (opcode, params, [shapes], [tensor_data]))
+
     length_out = ctypes.c_int()
     has_error = ctypes.c_int()
 
