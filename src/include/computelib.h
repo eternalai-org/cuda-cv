@@ -106,14 +106,14 @@ uint8_t* _execute(
 extern "C" {
 #endif
 
-uint8_t* cuda_execute_operation(
+const uint8_t* cuda_execute_operation(
     uint8_t* payload_in, // bytes: opcode, params, shapes, tensors
     int32_t length_in, 
     int32_t* length_out,
     uint8_t* has_eerror
 );
 
-void deallocate_cpp_response(uint8_t* payload);
+void deallocate_cpp_response(const uint8_t* payload);
 
 #if __cplusplus
 }

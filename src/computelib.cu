@@ -1016,7 +1016,7 @@ uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
 
 
 // extern "C"
-uint8_t* cuda_execute_operation(
+const uint8_t* cuda_execute_operation(
     uint8_t* payload_in, // bytes: opcode, params, shapes, tensors
     int32_t length_in, 
     int32_t* length_out,
@@ -1206,7 +1206,7 @@ uint8_t* cuda_execute_operation(
 }
 
 // extern "C"
-void deallocate_cpp_response(uint8_t* payload)
+void deallocate_cpp_response(const uint8_t* payload)
 {
     if (payload != nullptr)
     {

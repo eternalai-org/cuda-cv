@@ -67,7 +67,7 @@ exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main
 
 debug: libcomputelib.so
-	python3 ../test/test_abi.py
+	python3 -X nogil ../test/test_abi.py
 
 release: libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi

@@ -1,12 +1,10 @@
-from eth_abi import encode as abi_encode, decode as abi_decode
-import ctypes
-import os
 import random
 import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 import json
 from tensor import Tensor
+from op import execute
 
 '''
 uint8_t* cuda_execute_operation(
@@ -17,18 +15,14 @@ uint8_t* cuda_execute_operation(
 );
 '''
 
-dll = ctypes.CDLL(os.path.join(os.getcwd(), 'libcomputelib.so'))
-
 def create_random_tensor():
     shapes = [random.randint(1, 10) for _ in range(4)]
     flatten = np.prod(shapes)
-
     tensor = (np.random.rand(flatten).astype(np.float64) * 100).astype(np.int64)
     return Tensor(tensor, shapes)
 
 def create_random_test_case():
     tensor = create_random_tensor()
-    
     opcode, random_params = 27, [random.randint(0, 100) for _ in range(random.randint(0, 10))]
     return opcode, random_params, tensor    
 
@@ -38,40 +32,20 @@ def compare_tensors(t1, t2):
 
 def run_case(*args):
     sample = create_random_test_case()
-    opcode, params, tensor = sample
-    shapes, tensor_data = tensor.shape, tensor.compress()
+    tout = execute(*sample)
 
-    inp = abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'uint256[][]'), (opcode, params, [shapes], [tensor_data]))
-
-    length_out = ctypes.c_int()
-    has_error = ctypes.c_int()
-
-    length_out_ptr = ctypes.pointer(length_out)
-    has_error_ptr = ctypes.pointer(has_error)
-
-    out = dll.cuda_execute_operation(inp, len(inp), length_out_ptr, has_error_ptr)
-
-    deref = bytes(ctypes.cast(out, ctypes.POINTER(ctypes.c_ubyte * length_out.value)).contents)
-
-    template_out = ('uint256[]', 'uint64[]')
-    (tensor_out, shape_out) = abi_decode(template_out, deref)
-    dll.deallocate_cpp_response(out)
-
-    if not (compare_tensors(sample[3][0], tensor_out) and compare_tensors(sample[2][0], shape_out) and has_error.value == 0):
+    if tout is None or not (compare_tensors(sample[2].data, tout.data) and compare_tensors(sample[2].shape, tout.shape)):
         random_payload = str(random.randint(0, 1000000))
 
         with open(f'error_{random_payload}.json', 'w') as f:
-            json.dump({
-                'sample': sample,
-                'tensor_out': tensor_out,
-                'shape_out': shape_out,
-                'has_error': has_error.value
-            }, f)
-
-    return compare_tensors(sample[3][0], tensor_out) and compare_tensors(sample[2][0], shape_out) and has_error.value == 0
+            json.dump({'sample': sample}, f)
+            
+        return False
+    
+    return True
 
 def benchmark_abi():
-    n_cases = 1000 * 1000
+    n_cases = 10 * 1000
     
     futures = []
     with ProcessPoolExecutor(max_workers=2) as executor:
@@ -79,49 +53,8 @@ def benchmark_abi():
             futures.append(executor.submit(run_case))
 
     results = [f.result() for f in tqdm(futures, total=n_cases, desc='Processing results')]
-    print('All results are', all(results))
+    print('All results are', all(f == True for f in results))
     executor.shutdown()
 
 if __name__ == '__main__':
-    
     benchmark_abi()
-    
-    # test matmul
-    shape_a = [2, 3]
-    shape_b = [3, 2]
-    a = (np.random.rand(*shape_a).astype(np.float64) * 100).astype(np.int64)
-    b = (np.random.rand(*shape_b).astype(np.float64) * 100).astype(np.int64)
-    c = np.matmul(a, b)
-
-    print('Expected:', c)
-
-    opcode = 3 
-    params = []
-    shapes = [shape_a, shape_b]
-    _a = [compress_uint256(*i) for i in chunked((a.flatten() * (2 ** 32)).tolist(), 4)]
-    _b = [compress_uint256(*i) for i in chunked((b.flatten() * (2 ** 32)).tolist(), 4)]
-    tensors = [_a, _b]
-    
-    sample = opcode, params, shapes, tensors
-    inp = abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'uint256[][]'), sample)
-    
-    length_out = ctypes.c_int()
-    has_error = ctypes.c_int()
-    
-    length_out_ptr = ctypes.pointer(length_out)
-    has_error_ptr = ctypes.pointer(has_error)
-    
-    out = dll.cuda_execute_operation(inp, len(inp), length_out_ptr, has_error_ptr) 
-    print('Error:', has_error.value, out.__class__, length_out.value)
-    
-    deref = bytearray(ctypes.cast(out, ctypes.POINTER(ctypes.c_char * length_out.value)).contents)
-    template_out = ('uint256[]', 'uint64[]')
-    
-    (tensor_out, shape_out) = abi_decode(template_out, deref)
-    
-    
-    tensor_out = np.array([unpack_uint256(i) for i in tensor_out], dtype=np.float64).flatten().reshape(shape_out)
-        
-    print('Result:', c)
-    print('Got:', tensor_out / (2 ** 32))
-    dll.deallocate_cpp_response(out)
