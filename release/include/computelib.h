@@ -113,6 +113,13 @@ uint8_t* cuda_execute_operation(
     uint8_t* has_eerror
 );
 
+uint8_t* cuda_execute_operation_test(
+    uint8_t* payload_in, // bytes: opcode, params, shapes, tensors
+    int32_t length_in, 
+    int32_t* length_out,
+    uint8_t* _error
+);
+
 void deallocate_cpp_response(uint8_t* payload);
 
 #if __cplusplus
