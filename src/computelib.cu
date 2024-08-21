@@ -1259,6 +1259,19 @@ uint8_t* cuda_execute_operation(
 }
 
 // extern "C"
+uint8_t* cuda_execute_operation(
+    uint8_t* payload_in, // bytes: opcode, params, shapes, tensors
+    int32_t length_in, 
+    int32_t* length_out,
+    uint8_t* _error
+)
+{
+    logd("cuda_execute_operation");
+    *length_out = length_in;
+    return payload_in;
+}
+
+// extern "C"
 void deallocate_cpp_response(uint8_t* payload)
 {
     if (payload != nullptr)
