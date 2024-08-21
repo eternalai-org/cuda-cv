@@ -66,8 +66,29 @@ main: main.cu libcomputelib.so helpers.o
 exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main
 
-debug: libcomputelib.so
+test_abi: libcomputelib.so
 	python3 -X nogil ../test/test_abi.py
+
+test_act: libcomputelib.so
+	python3 -X nogil ../test/test_activations.py
+
+test_elementwise: libcomputelib.so
+	python3 -X nogil ../test/test_elementwise.py
+
+test_matmul: libcomputelib.so
+	python3 -X nogil ../test/test_matmul.py
+
+test_transformation: libcomputelib.so
+	python3 -X nogil ../test/test_transformation.py
+
+test_merging: libcomputelib.so
+	python3 -X nogil ../test/test_merging.py
+
+test_pooling: libcomputelib.so
+	python3 -X nogil ../test/test_pooling.py
+
+test_conv2d: libcomputelib.so
+	python3 -X nogil ../test/test_conv2d.py
 
 release: libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi

@@ -1,5 +1,6 @@
 from enum import Enum
 from tensor import Tensor
+import base64
 
 class Operation(int, Enum):
     CONV2D = 0, # 0
@@ -79,14 +80,24 @@ def execute(op: int, params, tensor: Tensor) -> Tensor:
     length_out_ptr = ctypes.pointer(length_out)
     has_error_ptr = ctypes.pointer(has_error)
     
+    # b64 = base64.b64encode(b)
+    # with open('encoded.txt', 'w') as f:
+    #     f.write(b64.decode())
+    
     out = dll.cuda_execute_operation(b, len(b), length_out_ptr, has_error_ptr) 
 
     if has_error.value != 0:
         raise ValueError('CUDA error')
     
     deref = bytearray(ctypes.cast(out, ctypes.POINTER(ctypes.c_char * length_out.value)).contents)
-    template_out = ('uint256[]', 'uint64[]')
     
-    (tensor_out, shape_out) = abi_decode(template_out, deref)
+    # b64_out = base64.b64encode(deref)
+    # with open('decoded.txt', 'w') as f:
+    #     f.write(b64_out.decode())
     
-    return Tensor.uncompress(tensor_out, shape_out)
+    (tensor_out, shape_out) = abi_decode(('uint256[]', 'uint64[]'), deref)
+    dll.deallocate_cpp_response(out)
+    
+    tout = Tensor.uncompress(tensor_out, shape_out)
+    
+    return tout

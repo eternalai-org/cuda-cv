@@ -86,7 +86,7 @@ void __maxPoolingFixedLongLong(
         pad_right = pad_w - pad_left;
     }
 
-    long long *d_gpu, *padded_inp;
+    long long *d_gpu;
 
     int out_w = (w + pad_left + pad_right - pool_size) / stride_w + 1;
     int out_h = (h + pad_top + pad_bottom - pool_size) / stride_h + 1;
@@ -96,31 +96,28 @@ void __maxPoolingFixedLongLong(
     uint64_t flatSize = inpFlatSize + outFlatSize;
 
     cudaMalloc(&d_gpu, flatSize * sizeof(long long));
-    padded_inp = new long long[inpFlatSize];
-
-    // printf("Input\n");
-    // printmat3d(inp, h, w, in_channel);
-
-    memset(padded_inp, 0x00, inpFlatSize * sizeof(long long));
-
-    for (int i = 0; i < h; ++i)
+    
+    if (padding == 1)
     {
-        for (int j = 0; j < w; ++j)
+        long long* padded_inp = new long long[inpFlatSize];
+        memset(padded_inp, 0x00, inpFlatSize * sizeof(long long));
+
+        for (int i = 0; i < h; ++i)
         {
-            memcpy(padded_inp + ((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel, inp + (i * w + j) * in_channel, in_channel << 3);
-            // for (int k = 0; k < in_channel; ++k)
-            // {
-            //     padded_inp[((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel + k] = inp[(i * w + j) * in_channel + k];
-            // }
+            for (int j = 0; j < w; ++j)
+            {
+                memcpy(padded_inp + ((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel, inp + (i * w + j) * in_channel, in_channel << 3);
+            }
         }
+
+        cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        delete[] padded_inp;
     }
-
-    // printf("Padded input\n");
-    // printmat3d(padded_inp, h + pad_bottom + pad_top, w + pad_left + pad_right, in_channel);
-
-    cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
-    delete[] padded_inp;
-
+    else
+    {
+        cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+    }
+    
     const int thread_x = 32, thread_y=32, thread_z=1; 
     dim3 threads_per_block(thread_x, thread_y, thread_z);
 
@@ -140,13 +137,6 @@ void __maxPoolingFixedLongLong(
 
     cudaMemcpy(out, d_gpu + inpFlatSize, outFlatSize * sizeof(long long), cudaMemcpyDeviceToHost);
 
-    // printf("Output\n");
-    // printmat3d(out, out_h, out_w, in_channel);
-
-    // printf("OutH %d\n", out_h);
-    // printf("OutW %d\n", out_w);
-    // printf("OutC %d\n", in_channel);
-
     cudaFree(d_gpu);
 }
 
@@ -158,7 +148,6 @@ void __avgPoolingFixedLongLong(
     , uint8_t* error
 )
 {
-    // only support for squared pool size, squared input
     // only support for squared pool size, squared input
 
     if (w != h)
@@ -181,11 +170,11 @@ void __avgPoolingFixedLongLong(
 
     if (padding == 1)
     {
-        const int _out_h = (h + stride_h - 1) / stride_h;
-        const int _out_w = (w + stride_w - 1) / stride_w;
+        int out_h = (h + stride_h - 1) / stride_h;
+        int out_w = (w + stride_w - 1) / stride_w;
 
-        const int pad_h = max((_out_h - 1) * stride_h + pool_size - h, 0);
-        const int pad_w = max((_out_w - 1) * stride_w + pool_size - w, 0);
+        int pad_h = max((out_h - 1) * stride_h + pool_size - h, 0);
+        int pad_w = max((out_w - 1) * stride_w + pool_size - w, 0);
         
         pad_top = pad_h / 2;
         pad_bottom = pad_h - pad_top;
@@ -194,36 +183,43 @@ void __avgPoolingFixedLongLong(
         pad_right = pad_w - pad_left;
     }
 
-    long long *d_gpu, *padded_inp;
+    long long *d_gpu;
 
-    const int out_w = (w + pad_left + pad_right - pool_size) / stride_w + 1;
-    const int out_h = (h + pad_top + pad_bottom - pool_size) / stride_h + 1;
+    int out_w = (w + pad_left + pad_right - pool_size) / stride_w + 1;
+    int out_h = (h + pad_top + pad_bottom - pool_size) / stride_h + 1;
 
-    const uint64_t inpFlatSize = (w + pad_left + pad_right) * (h + pad_top + pad_bottom) * in_channel;
-    const uint64_t outFlatSize = out_h * out_w * in_channel;
-    const uint64_t cudaMemSize = inpFlatSize + outFlatSize;
+    uint64_t inpFlatSize = (w + pad_left + pad_right) * (h + pad_top + pad_bottom) * in_channel;
+    uint64_t outFlatSize = out_h * out_w * in_channel;
+    uint64_t flatSize = inpFlatSize + outFlatSize;
 
-    cudaMalloc(&d_gpu, cudaMemSize * sizeof(long long));
-    padded_inp = new long long[inpFlatSize];
-
-    memset(padded_inp, 0x00, inpFlatSize * sizeof(long long));
-
-    for (int i = 0; i < h; ++i)
+    cudaMalloc(&d_gpu, flatSize * sizeof(long long));
+    
+    if (padding == 1)
     {
-        for (int j = 0; j < w; ++j)
+        long long* padded_inp = new long long[inpFlatSize];
+        memset(padded_inp, 0x00, inpFlatSize * sizeof(long long));
+
+        for (int i = 0; i < h; ++i)
         {
-            memcpy(padded_inp + ((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel, inp + (i * w + j) * in_channel, in_channel << 3);
-            // for (int k = 0; k < in_channel; ++k)
-            // {
-            //     padded_inp[((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel + k] = inp[(i * w + j) * in_channel + k];
-            // }
+            for (int j = 0; j < w; ++j)
+            {
+                memcpy(
+                    padded_inp + ((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel, 
+                    inp + (i * w + j) * in_channel, 
+                    in_channel << 3
+                );
+            }
         }
+
+        cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        delete[] padded_inp;
+    }
+    else
+    {
+        cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
     }
 
-    cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
-    delete[] padded_inp;
-
-    const int thread_x = 32, thread_y=32, thread_z = 1;
+    const int thread_x = 32, thread_y = 32, thread_z = 1;
     dim3 threads_per_block(thread_x, thread_y, thread_z);
 
     const dim3 block_per_grid(
@@ -231,7 +227,6 @@ void __avgPoolingFixedLongLong(
         (out_h + threads_per_block.y - 1) / threads_per_block.y,
         (in_channel + threads_per_block.z - 1) / threads_per_block.z
     );
-
 
     avgPoolingImplFixedLongLong_kernel<<<block_per_grid, threads_per_block>>>(
         d_gpu, d_gpu + inpFlatSize, 

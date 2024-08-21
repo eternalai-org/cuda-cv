@@ -405,7 +405,7 @@ __global__ void sumReductionV2_kernel(long long* d_gpu, long long* blockOutput, 
 __global__ void mat_add_fixed_longlong(long long *A, long long *B, long long *C, int n) {
     int x = threadIdx.x + blockIdx.x * blockDim.x; 
 
-    if(x < n){
+    if(x < n) {
         C[x] = A[x] + B[x];
     }
 }
@@ -413,15 +413,15 @@ __global__ void mat_add_fixed_longlong(long long *A, long long *B, long long *C,
 __global__ void mat_sub_fixed_longlong(long long *A, long long *B, long long *C, int n) {
     int x = threadIdx.x + blockIdx.x * blockDim.x; 	// Row address
 
-    if(x < n){
-        C[x] = FixedLongLong::sub(A[x], B[x]);
+    if(x < n) {
+        C[x] = A[x] - B[x];
     }
 }
 
 __global__ void mat_mul_fixed_longlong(long long *A, long long *B, long long *C, int n) {
     int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
 
-    if(x < n){
+    if(x < n) {
         C[x] = FixedLongLong::mul(A[x], B[x]);
     }
 }
@@ -430,7 +430,7 @@ __global__ void mat_mul_fixed_longlong(long long *A, long long *B, long long *C,
 __global__ void mat_div_fixed_longlong(long long *A, long long *B, long long *C, int n) {
     int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
 
-    if(x < n && B[x] != 0){
+    if(x < n && B[x] != 0) {
         C[x] = FixedLongLong::div(A[x], B[x]);
     }
 }
@@ -438,7 +438,7 @@ __global__ void mat_div_fixed_longlong(long long *A, long long *B, long long *C,
 __global__ void mat_sqrt_fixed_longlong(long long *A, long long *B, int n) {
     int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
 
-    if(x < n && A[x] >= 0){
+    if(x < n && A[x] >= 0) {
         B[x] = FixedLongLong::sqrt(A[x]);
     }
 }

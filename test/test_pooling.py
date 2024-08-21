@@ -1,0 +1,74 @@
+import numpy as np
+from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
+import keras
+import random
+from tensor import Tensor
+from op import Operation, execute
+from utils import absolute_or_relative_error
+
+def run_case(*args): 
+    eps = 1e-4
+
+    spatial_size = random.randint(16, 1024)
+    channel_in = random.randint(1, 255)
+    
+    t = Tensor.random_tensor([spatial_size, spatial_size, channel_in])
+    window_size = random.randint(1, min(16, spatial_size))
+    stride = random.randint(1, window_size)
+    padding = random.choice(['valid', 'same'])
+
+    padding_i = 1 if padding == 'same' else 0
+    maxpooling = keras.layers.MaxPooling2D(
+        pool_size=(window_size, window_size), 
+        strides=(stride, stride), 
+        padding=padding
+    )
+    
+    avgpooling = keras.layers.AveragePooling2D(
+        pool_size=(window_size, window_size),
+        strides=(stride, stride),
+        padding=padding
+    )
+    
+    params = [window_size, window_size, stride, stride, padding_i]
+    expected_max_pooling = maxpooling(t.data.reshape(1, *t.shape)).numpy().flatten()
+    expected_avg_pooling = avgpooling(t.data.reshape(1, *t.shape)).numpy().flatten()
+
+    maxpooling_out = execute(Operation.MAXPOOLING2D, params, t)
+    avgpooling_out = execute(Operation.AVGPOOLING2D, params, t)
+    
+    maxpooling_mae = absolute_or_relative_error(maxpooling_out.data, expected_max_pooling).mean()
+    avgpooling_mae = absolute_or_relative_error(avgpooling_out.data, expected_avg_pooling).mean()
+    
+    res = all([
+        maxpooling_mae < eps,
+        avgpooling_mae < eps
+    ])
+    
+    if not res:
+        print(padding)
+        print(f'MaxPooling MAE: {maxpooling_mae}')
+        print(f'AvgPooling MAE: {avgpooling_mae}')
+    
+    return res
+    
+def benchmark_pooling():
+    n_cases = 10 
+
+    futures = []
+    with ProcessPoolExecutor(max_workers=2) as executor:
+        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+            futures.append(executor.submit(run_case))
+
+    fails = sum([not f.result() for f in futures])
+    success = n_cases - fails
+
+    print(f'Success: {success}/{n_cases}')
+    print(f'Fails: {fails}/{n_cases}')
+
+    if fails > 0:
+        raise ValueError('Some test cases failed')
+
+if __name__ == '__main__':
+    benchmark_pooling()

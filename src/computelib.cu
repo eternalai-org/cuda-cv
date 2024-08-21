@@ -51,6 +51,11 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
         _error
     );
 
+    for (int i = 0; i < h_out * w_out * c_out; ++i)
+    {
+        std::cerr << (1.0 * out[i]) / (1LL << 32) << " ";
+    }
+
     if (*_error)
     {
         delete[] out;
@@ -86,8 +91,11 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
+    std::cerr << "DEBUG: " << h_in << " " << w_in << " " << c_in << " " << kh << " " << kw << " " << stride_h << " " << stride_w << " " << padding << std::endl;
+
     estimatePoolingOutputSize(
-        h_in, w_in, c_in, kh, padding, stride_h, stride_w, (int*)&h_out, (int*)&w_out
+        h_in, w_in, c_in, kh, padding, stride_h, stride_w, 
+        (int*)&h_out, (int*)&w_out
     );
 
     std::vector<uint64_t> out_shape = {h_out, w_out, c_in};
@@ -231,19 +239,11 @@ uint8_t* elementwise_add_call(const operation_pack& pack, int32_t* length_out, u
         return nullptr;
     }
 
-    int prod1 = 1, prod2 = 1;
     const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
-    for (const int& x: s1)
-    {
-        prod1 *= x;
-    }
-
-    for (const int& x: s2)
-    {
-        prod2 *= x;
-    }
+    int prod1 = std::accumulate(s1.begin(), s1.end(), 1, std::multiplies<int64_t>());
+    int prod2 = std::accumulate(s2.begin(), s2.end(), 1, std::multiplies<int64_t>());
 
     if (prod1 != prod2)
     {
@@ -284,19 +284,11 @@ uint8_t* elementwise_mul_call(const operation_pack& pack, int32_t* length_out, u
         return nullptr;
     }
 
-    int prod1 = 1, prod2 = 1;
     const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
-    for (const int& x: s1)
-    {
-        prod1 *= x;
-    }
-
-    for (const int& x: s2)
-    {
-        prod2 *= x;
-    }
+    int prod1 = std::accumulate(s1.begin(), s1.end(), 1, std::multiplies<int64_t>());
+    int prod2 = std::accumulate(s2.begin(), s2.end(), 1, std::multiplies<int64_t>());
 
     if (prod1 != prod2)
     {
@@ -337,19 +329,11 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
         return nullptr;
     }
 
-    int prod1 = 1, prod2 = 1;
     const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
-    for (const int& x: s1)
-    {
-        prod1 *= x;
-    }
-
-    for (const int& x: s2)
-    {
-        prod2 *= x;
-    }
+    int prod1 = std::accumulate(s1.begin(), s1.end(), 1, std::multiplies<int64_t>());
+    int prod2 = std::accumulate(s2.begin(), s2.end(), 1, std::multiplies<int64_t>());
 
     if (prod1 != prod2)
     {
@@ -362,8 +346,8 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
         (long long*)pack.tensors[0].data(), 
         (long long*)pack.tensors[1].data(), 
         (long long*)out, 
-        1,
         prod1, 
+        1,
         _error
     );
 
@@ -390,19 +374,11 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
         return nullptr;
     }
 
-    int prod1 = 1, prod2 = 1;
     const std::vector<uint64_t>& s1 = pack.tensors[0].shape(),
                                  s2 = pack.tensors[1].shape();
 
-    for (const int& x: s1)
-    {
-        prod1 *= x;
-    }
-
-    for (const int& x: s2)
-    {
-        prod2 *= x;
-    }
+    int prod1 = std::accumulate(s1.begin(), s1.end(), 1, std::multiplies<int64_t>());
+    int prod2 = std::accumulate(s2.begin(), s2.end(), 1, std::multiplies<int64_t>());
 
     if (prod1 != prod2)
     {
@@ -437,12 +413,14 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
 uint8_t* transform_exp_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* transform_sqrt_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-
+    *_error = true;
+    return nullptr;
 }
 
 uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
@@ -651,12 +629,7 @@ uint8_t* tanh_call(const operation_pack& pack, int32_t* length_out, uint8_t* _er
     }
 
     const std::vector<uint64_t>& inp = pack.tensors[0].shape();
-    uint64_t prod = 1;
-    
-    for (const int& x: inp)
-    {
-        prod *= x;
-    }
+    uint64_t prod = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
 
     int64_t* out = new int64_t[prod];
     __tanhFixedLongLong(
@@ -692,12 +665,7 @@ uint8_t* sigmoid_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     }
 
     const std::vector<uint64_t>& inp = pack.tensors[0].shape();
-    uint64_t prod = 1;
-    
-    for (const int& x: inp)
-    {
-        prod *= x;
-    }
+    uint64_t prod = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
 
     int64_t* out = new int64_t[prod];
     __sigmoidFixedLongLong(
@@ -733,12 +701,7 @@ uint8_t* softmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     }
 
     const std::vector<uint64_t>& inp = pack.tensors[0].shape();
-    uint64_t prod = 1;
-    
-    for (const int& x: inp)
-    {
-        prod *= x;
-    }
+    uint64_t prod = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
 
     int64_t* out = new int64_t[prod];
     __softmaxFixedLongLong(
