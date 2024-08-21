@@ -437,12 +437,14 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
     
     if (ma.size() != 1 || mv.size() != 1 || gama.size() != 1 || beta.size() != 1)
     {
+        std::cerr << "Error in batch_norm_call: wrong shape" << std::endl;
         *_error = true;
         return nullptr;
     }
 
-    if (params.size() == 0 || ma[0] != c_in || mv[0] != c_in || gama[0] != c_in || beta[0] != c_in)
+    if (ma[0] != c_in || mv[0] != c_in || gama[0] != c_in || beta[0] != c_in)
     {
+        std::cerr << "Error in batch_norm_call: wrong params" << std::endl;
         *_error = true;
         return nullptr;
     }
@@ -462,6 +464,7 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
     if (*_error)
     {
+        std::cerr << "Error in batch_norm_call: error in batchNormalizeFixedLongLong" << std::endl;
         delete[] out;
         return nullptr;
     }
