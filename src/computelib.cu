@@ -46,15 +46,10 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
         (long long*)pack.tensors[2].data(), 
         (long long*)out, 
         kw, c_in, c_out, 
-        h_in, h_out, padding, 
+        h_in, w_in, padding, 
         stride_h, stride_w, 
         _error
     );
-
-    for (int i = 0; i < h_out * w_out * c_out; ++i)
-    {
-        std::cerr << (1.0 * out[i]) / (1LL << 32) << " ";
-    }
 
     if (*_error)
     {
@@ -90,8 +85,6 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
 
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
-
-    std::cerr << "DEBUG: " << h_in << " " << w_in << " " << c_in << " " << kh << " " << kw << " " << stride_h << " " << stride_w << " " << padding << std::endl;
 
     estimatePoolingOutputSize(
         h_in, w_in, c_in, kh, padding, stride_h, stride_w, 
@@ -518,33 +511,45 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
         return nullptr;
     }
 
+    for (int i = 1; i < n_tensors; ++i)
+    {
+        if (pack.tensors[i].shape().size() != pack.tensors[0].shape().size())
+        {
+            *_error = true;
+            return nullptr;
+        }
+    }
+
     int64_t** inp_tensors = new int64_t*[n_tensors];
     int64_t** shapes = new int64_t*[n_tensors];
-    int common_dims = pack.params[0];
-
+    int common_dims = pack.tensors[0].shape().size();
 
     for (int i = 0; i < n_tensors; ++i)
     {
         inp_tensors[i] = pack.tensors[i].data();
-        shapes[i] = (int64_t*)(&pack.tensors[i].shape()[0]);
+        shapes[i] = new int64_t[common_dims];
+        const auto& x = pack.tensors[i].shape();
+        std::copy(x.begin(), x.end(), shapes[i]);
     }
 
-    std::vector<uint64_t> out_shape(common_dims, 0);
+    long long* out_shape = new long long[common_dims];
 
-    if (estimateConcatenate_dummy((long long**)shapes, params[0], common_dims, n_tensors, (long long*)&out_shape[0]))
+    if (!estimateConcatenate_dummy((long long**)shapes, params[0], common_dims, n_tensors, out_shape))
     {
         *_error = true;
         delete[] inp_tensors;
+
+        for (int i = 0; i < n_tensors; ++i)
+        {
+            delete[] shapes[i];
+        }
+
         delete[] shapes;
+        delete[] out_shape;
         return nullptr;
     }
     
-    int32_t prod = 1;
-
-    for (const int& x: out_shape)
-    {
-        prod *= x;
-    }
+    int32_t prod = std::accumulate(out_shape, out_shape + common_dims, 1, std::multiplies<long long>());
 
     int64_t* out = new int64_t[prod];
     __concatenate_dummy(
@@ -561,18 +566,32 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
     {
         delete[] out;
         delete[] inp_tensors;
+
+        for (int i = 0; i < n_tensors; ++i)
+        {
+            delete[] shapes[i];
+        }
+
         delete[] shapes;
+        delete[] out_shape;
         return nullptr;
     }
 
     uint8_t* out_bytes = abi_encode_tensor(
-        TensorWrapper(out_shape, out), 
+        TensorWrapper(std::vector<uint64_t>(out_shape, out_shape + common_dims), out), 
         length_out
     );
 
     delete[] out;
     delete[] inp_tensors;
+
+    for (int i = 0; i < n_tensors; ++i)
+    {
+        delete[] shapes[i];
+    }
+
     delete[] shapes;
+    delete[] out_shape;
 
     return out_bytes;
 }

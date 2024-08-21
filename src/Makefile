@@ -82,13 +82,13 @@ test_transformation: libcomputelib.so
 	python3 -X nogil ../test/test_transformation.py
 
 test_merging: libcomputelib.so
-	python3 -X nogil ../test/test_merging.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_merging.py
 
 test_pooling: libcomputelib.so
-	python3 -X nogil ../test/test_pooling.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_pooling.py
 
 test_conv2d: libcomputelib.so
-	python3 -X nogil ../test/test_conv2d.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_conv2d.py
 
 release: libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi

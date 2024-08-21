@@ -77,19 +77,22 @@ void __conv2dFixedLongLong(
         {
             for (int j = 0; j < w; ++j)
             {
-                memcpy(padded_inp + ((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel, inp + (i * w + j) * in_channel, in_channel << 3);
+                memcpy(
+                    padded_inp + ((i + pad_top) * (w + pad_left + pad_right) + j + pad_left) * in_channel, 
+                    inp + (i * w + j) * in_channel, 
+                    in_channel << 3
+                );
             }
         }
 
         cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
-
         delete[] padded_inp;
     }
     else
     {
         cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
     }
-    
+
     cudaMemcpy(d_gpu + inpFlatSize, kernel, kernelFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
     cudaMemcpy(d_gpu + inpFlatSize + kernelFlatSize, bias, out_channel * sizeof(long long), cudaMemcpyHostToDevice);
 
