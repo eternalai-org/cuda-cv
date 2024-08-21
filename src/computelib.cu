@@ -1259,7 +1259,7 @@ uint8_t* cuda_execute_operation(
 }
 
 // extern "C"
-uint8_t* cuda_execute_operation(
+uint8_t* cuda_execute_operation_test(
     uint8_t* payload_in, // bytes: opcode, params, shapes, tensors
     int32_t length_in, 
     int32_t* length_out,
