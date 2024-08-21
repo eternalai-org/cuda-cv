@@ -1,6 +1,7 @@
 from enum import Enum
 from tensor import Tensor
 import base64
+import time
 
 class Operation(int, Enum):
     CONV2D = 0, # 0
@@ -72,7 +73,11 @@ def decode(b: bytes) -> Tensor:
     return Tensor.uncompress(data, shape)
 
 def execute(op: int, params, tensor: Tensor) -> Tensor:
+    # print('Executing', op)
+
+    t_start = time.time()
     b = encode(op, params, tensor)
+    # print('Encoded', op, len(b) / 1e6, 'mb', f'Elapsed time: {time.time() - t_start}')
     
     length_out = ctypes.c_int()
     has_error = ctypes.c_int()
@@ -84,18 +89,23 @@ def execute(op: int, params, tensor: Tensor) -> Tensor:
     # with open('encoded.txt', 'w') as f:
     #     f.write(b64.decode())
     
+    t_start = time.time()
     out = dll.cuda_execute_operation(b, len(b), length_out_ptr, has_error_ptr) 
+    t_end = time.time()
+    
+    # print('Operation', op, f'Elapsed time: {t_end - t_start}')
+    # print('CUDA error', has_error.value)
+    # print('Output length', length_out.value)
 
     if has_error.value != 0:
         raise ValueError('CUDA error')
     
     deref = bytearray(ctypes.cast(out, ctypes.POINTER(ctypes.c_char * length_out.value)).contents)
     
-    # b64_out = base64.b64encode(deref)
-    # with open('decoded.txt', 'w') as f:
-    #     f.write(b64_out.decode())
-    
+    t_start = time.time()
     (tensor_out, shape_out) = abi_decode(('uint256[]', 'uint64[]'), deref)
+    # print('Decoded', op, len(deref) / 1e6, 'mb', f'Elapsed time: {time.time() - t_start}')
+
     dll.deallocate_cpp_response(out)
     
     tout = Tensor.uncompress(tensor_out, shape_out)
