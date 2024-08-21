@@ -10,6 +10,12 @@
 #include <algorithm>
 #include <numeric>
 
+
+void logd(const char* msg)
+{
+    printf("%s - %s - %s: %s\n", __FILE__, __FUNCTION__, __LINE__, msg);
+}
+
 uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
     if (pack.tensors.size() != 3 || pack.tensors[0].shape().size() != 3)
@@ -1023,12 +1029,23 @@ uint8_t* cuda_execute_operation(
     uint8_t* _error
 )
 {
+    logd("cuda_execute_operation");
+
     int short_length = length_in >> 3;
+    logd("cuda_execute_operation");
+
     int64_t* inp = new int64_t[short_length];
+    logd("cuda_execute_operation");
+
     memset(inp, 0, short_length);
+
+    logd("cuda_execute_operation");
+
 
     for (int i = 0, j = 0; i < short_length; ++i, j += 8)
     {
+        logd("cuda_execute_operation loop");
+
         inp[i] = (int64_t(payload_in[j + 0]) << 56) 
             | (int64_t(payload_in[j + 1]) << 48) 
             | (int64_t(payload_in[j + 2]) << 40) 
@@ -1038,11 +1055,14 @@ uint8_t* cuda_execute_operation(
             | (int64_t(payload_in[j + 6]) << 8) 
             |  int64_t(payload_in[j + 7]);
     }
+    logd("cuda_execute_operation");
 
     operation_pack pack = abi_decode_op(inp, _error);
+    logd("cuda_execute_operation");
 
     auto wrap_return_fn = [&](uint8_t* out = nullptr) -> uint8_t* {
         delete[] inp;
+        logd("wrap return fn");
 
         if (out == nullptr)
         {
@@ -1054,151 +1074,184 @@ uint8_t* cuda_execute_operation(
 
     if (*_error)
     {
+        logd("cuda_execute_operation  error");
+    
         return wrap_return_fn();
     }
+
+    logd("cuda_execute_operation");
     
     if (pack.op == opcode::MATMUL)
     {
+        logd("cuda_execute_operation matmul");
         return wrap_return_fn(matmul_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::CONV2D)
     {
+        logd("cuda_execute_operation conv2d");
         return wrap_return_fn(conv2d_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::MAXPOOLING2D)
     {
+        logd("cuda_execute_operation maxpooling2d");
         return wrap_return_fn(maxpooling2d_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::AVGPOOLING2D)
     {
+        logd("cuda_execute_operation avgpooling2d");
         return wrap_return_fn(avgpooling2d_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::ELEMENTWISE_ADD)
     {
+        logd("cuda_execute_operation elementwise_add");
         return wrap_return_fn(elementwise_add_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::ELEMENTWISE_MUL)
     {
+        logd("cuda_execute_operation elementwise_mul");
         return wrap_return_fn(elementwise_mul_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::ELEMENTWISE_SUB)
     {
+        logd("cuda_execute_operation elementwise_sub");
         return wrap_return_fn(elementwise_sub_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::ELEMENTWISE_DIV)
     {
+        logd("cuda_execute_operation elementwise_div");
         return wrap_return_fn(elementwise_div_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::TRANSFORM_EXP)
     {
+        logd("cuda_execute_operation transform_exp");
         return wrap_return_fn(transform_exp_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::TRANSFORM_SQRT)
     {
+        logd("cuda_execute_operation transform_sqrt");
         return wrap_return_fn(transform_sqrt_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::BATCH_NORM)
     {
+        logd("cuda_execute_operation batch_norm");
         return wrap_return_fn(batch_norm_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::LAYER_NORM)
     {
+        logd("cuda_execute_operation layer_norm");
         return wrap_return_fn(layer_norm_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::ZSCORE)
     {
+        logd("cuda_execute_operation zscore");
         return wrap_return_fn(zscore_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::MIN_MAX_SCALE)
     {
+        logd("cuda_execute_operation min_max_scale");
         return wrap_return_fn(min_max_scale_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::CONCATENATE)
     {
+        logd("cuda_execute_operation concatenate");
         return wrap_return_fn(concatenate_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::RELU)
     {
+        logd("cuda_execute_operation relu");
         return wrap_return_fn(relu_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::TANH)
     {
+        logd("cuda_execute_operation tanh");
         return wrap_return_fn(tanh_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::SIGMOID)
     {
+        logd("cuda_execute_operation sigmoid");
         return wrap_return_fn(sigmoid_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::SOFTMAX)
     {
+        logd("cuda_execute_operation softmax");
         return wrap_return_fn(softmax_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::LOGSOFTMAX)
     {
+        logd("cuda_execute_operation logsoftmax");
         return wrap_return_fn(logsoftmax_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::SOFTMAX2D)
     {
+        logd("cuda_execute_operation softmax2d");
         return wrap_return_fn(softmax2d_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::REDUCTION_MAX)
     {
+        logd("cuda_execute_operation reduction_max");
         return wrap_return_fn(reduction_max_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::REDUCTION_MIN)
     {
+        logd("cuda_execute_operation reduction_min");
         return wrap_return_fn(reduction_min_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::REDUCTION_MEAN)
     {
+        logd("cuda_execute_operation reduction_mean");
         return wrap_return_fn(reduction_mean_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::REDUCTION_SUM)
     {
+        logd("cuda_execute_operation reduction_sum");
         return wrap_return_fn(reduction_sum_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::REDUCTION_ARGMAX)
     {
+        logd("cuda_execute_operation reduction_argmax");
         return wrap_return_fn(reduction_argmax_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::REDUCTION_ARGMIN)
     {
+        logd("cuda_execute_operation reduction_argmin");
         return wrap_return_fn(reduction_argmin_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::DROPOUT)
     {
+        logd("cuda_execute_operation dropout");
         return wrap_return_fn(dropout_call(pack, length_out, _error));
     }
 
     if (pack.op == opcode::GLOBAL_AVGPOOLING2D)
     {
+        logd("cuda_execute_operation globalavgpooling");
         return wrap_return_fn(globalavgpooling_call(pack, length_out, _error));
     }
 
