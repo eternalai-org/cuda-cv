@@ -9,6 +9,13 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <helpers.cuh>
+
+#if defined(LOGGING_DEBUG)
+#define LOG_D(x) std::cerr << "[DEBUG][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
+#else
+#define LOG_D(x)
+#endif
 
 uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
@@ -27,8 +34,14 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
     // inp: [h, w, in_c]
     // kernel: [kh, kw, in_c, out_c]
     // bias: [out_c]
+    LOG_D("inp: " << inp[0] << " " << inp[1] << " " << inp[2]);
+    LOG_D("kernel: " << kernel[0] << " " << kernel[1] << " " << kernel[2] << " " << kernel[3]);
+    LOG_D("bias: " << bias[0]);
+
     if (kernel.size() != 4 || bias.size() != 1 || kernel[3] != bias[0] || kernel[2] != inp[2])
     {
+        LOG_D("Error in conv2d_call: wrong shape");
+
         *_error = true;
         return nullptr;
     }
@@ -53,6 +66,7 @@ uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 
     if (*_error)
     {
+        LOG_D("Error in conv2d_call: error in conv2dFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -79,17 +93,22 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
 
     if (params.size() != 5)
     {
+        LOG_D("Error in maxpooling2d_call: wrong params");
         *_error = true;
         return nullptr;
     }
 
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
+    LOG_D("h_in: " << h_in << " w_in: " << w_in << " c_in: " << c_in);
+    LOG_D("kh: " << kh << " kw: " << kw << " stride_h: " << stride_h << " stride_w: " << stride_w << " padding: " << padding);
 
     estimatePoolingOutputSize(
         h_in, w_in, c_in, kh, padding, stride_h, stride_w, 
         (int*)&h_out, (int*)&w_out
     );
+
+    LOG_D("h_out: " << h_out << " w_out: " << w_out);
 
     std::vector<uint64_t> out_shape = {h_out, w_out, c_in};
     int64_t* out = new int64_t[h_out * w_out * c_in];
@@ -104,6 +123,7 @@ uint8_t* maxpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
 
     if (*_error)
     {
+        LOG_D("Error in maxpooling2d_call: error in maxPoolingFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -121,6 +141,7 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
 {
     if (pack.tensors.size() != 1 || pack.tensors[0].shape().size() != 3)
     {
+        LOG_D("Error in avgpooling2d_call: wrong shape");
         *_error = true;
         return nullptr;
     }
@@ -130,6 +151,7 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
 
     if (params.size() != 5)
     {
+        LOG_D("Error in avgpooling2d_call: wrong params");
         *_error = true;
         return nullptr;
     }
@@ -137,9 +159,14 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
     uint32_t h_in = inp[0], w_in = inp[1], c_in = inp[2], h_out, w_out;
     uint32_t kh = params[0], kw = params[1], stride_h = params[2], stride_w = params[3], padding = params[4];
 
+    LOG_D("h_in: " << h_in << " w_in: " << w_in << " c_in: " << c_in);
+    LOG_D("kh: " << kh << " kw: " << kw << " stride_h: " << stride_h << " stride_w: " << stride_w << " padding: " << padding);
+
     estimatePoolingOutputSize(
         h_in, w_in, c_in, kh, padding, stride_h, stride_w, (int*)&h_out, (int*)&w_out
     );
+
+    LOG_D("h_out: " << h_out << " w_out: " << w_out);
 
     std::vector<uint64_t> out_shape = {h_out, w_out, c_in};
     int64_t* out = new int64_t[h_out * w_out * c_in];
@@ -153,6 +180,7 @@ uint8_t* avgpooling2d_call(const operation_pack& pack, int32_t* length_out, uint
 
     if (*_error)
     {
+        LOG_D("Error in avgpooling2d_call: error in avgPoolingFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -170,6 +198,7 @@ uint8_t* matmul_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 {
     if (pack.tensors.size() != 2)
     {
+        LOG_D("Error in matmul_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -194,6 +223,7 @@ uint8_t* matmul_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 
     if (w1 != h2)
     {
+        LOG_D("Error in matmul_call: wrong shape");
         *_error = true;
         return nullptr;
     }
@@ -211,6 +241,7 @@ uint8_t* matmul_call(const operation_pack& pack, int32_t* length_out, uint8_t* _
 
     if (*_error)
     {
+        LOG_D("Error in matmul_call: error in matmulFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -228,6 +259,7 @@ uint8_t* elementwise_add_call(const operation_pack& pack, int32_t* length_out, u
 {
     if (pack.tensors.size() != 2)
     {
+        LOG_D("Error in elementwise_add_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -240,6 +272,7 @@ uint8_t* elementwise_add_call(const operation_pack& pack, int32_t* length_out, u
 
     if (prod1 != prod2)
     {
+        LOG_D("Error in elementwise_add_call: wrong shape");
         *_error = true;
         return nullptr;
     }
@@ -256,6 +289,7 @@ uint8_t* elementwise_add_call(const operation_pack& pack, int32_t* length_out, u
 
     if (*_error)
     {
+        LOG_D("Error in elementwise_add_call: error in matAddLongLong");
         delete[] out;
         return nullptr;
     }
@@ -273,6 +307,7 @@ uint8_t* elementwise_mul_call(const operation_pack& pack, int32_t* length_out, u
 {
     if (pack.tensors.size() != 2)
     {
+        LOG_D("Error in elementwise_mul_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -285,6 +320,7 @@ uint8_t* elementwise_mul_call(const operation_pack& pack, int32_t* length_out, u
 
     if (prod1 != prod2)
     {
+        LOG_D("Error in elementwise_mul_call: wrong shape");
         *_error = true;
         return nullptr;
     }
@@ -301,6 +337,7 @@ uint8_t* elementwise_mul_call(const operation_pack& pack, int32_t* length_out, u
 
     if (*_error)
     {
+        LOG_D("Error in elementwise_mul_call: error in matMulLongLong");
         delete[] out;
         return nullptr;
     }
@@ -318,6 +355,7 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
 {
     if (pack.tensors.size() != 2)
     {
+        LOG_D("Error in elementwise_sub_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -330,6 +368,7 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
 
     if (prod1 != prod2)
     {
+        LOG_D("Error in elementwise_sub_call: wrong shape");
         *_error = true;
         return nullptr;
     }
@@ -346,6 +385,7 @@ uint8_t* elementwise_sub_call(const operation_pack& pack, int32_t* length_out, u
 
     if (*_error)
     {
+        LOG_D("Error in elementwise_sub_call: error in matSubLongLong");
         delete[] out;
         return nullptr;
     }
@@ -363,6 +403,7 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 {
     if (pack.tensors.size() != 2)
     {
+        LOG_D("Error in elementwise_div_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -375,6 +416,7 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
     if (prod1 != prod2)
     {
+        LOG_D("Error in elementwise_div_call: wrong shape");
         *_error = true;
         return nullptr;
     }
@@ -391,6 +433,7 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
     if (*_error)
     {
+        LOG_D("Error in elementwise_div_call: error in matDivLongLong");
         delete[] out;
         return nullptr;
     }
@@ -406,21 +449,25 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
 uint8_t* transform_exp_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("transform_exp_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* transform_sqrt_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("transform_sqrt_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("batch_norm_call has not been implemented yet");
     // inp, ma, mv, gama, beta
     if (pack.tensors.size() != 5)
     {
+        LOG_D("Error in batch_norm_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -434,17 +481,18 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
     const std::vector<int64_t>& params = pack.params;
 
     const int h_in = inp[0], w_in = inp[1], c_in = inp[2];
-    
+    LOG_D("h_in: " << h_in << " w_in: " << w_in << " c_in: " << c_in);
+
     if (ma.size() != 1 || mv.size() != 1 || gama.size() != 1 || beta.size() != 1)
     {
-        std::cerr << "Error in batch_norm_call: wrong shape" << std::endl;
+        LOG_D("Error in batch_norm_call: wrong input shape");
         *_error = true;
         return nullptr;
     }
 
     if (ma[0] != c_in || mv[0] != c_in || gama[0] != c_in || beta[0] != c_in)
     {
-        std::cerr << "Error in batch_norm_call: wrong params" << std::endl;
+        LOG_D("Error in batch_norm_call: wrong weight shape");
         *_error = true;
         return nullptr;
     }
@@ -464,7 +512,7 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
     if (*_error)
     {
-        std::cerr << "Error in batch_norm_call: error in batchNormalizeFixedLongLong" << std::endl;
+        LOG_D("Error in batch_norm_call: error in batchNormalizeFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -480,18 +528,21 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
 uint8_t* layer_norm_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("layer_norm_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* zscore_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("zscore_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* min_max_scale_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("min_max_scale_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
@@ -502,6 +553,7 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
     
     if (!n_tensors)
     {
+        LOG_D("Error in concatenate_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -510,6 +562,7 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
 
     if (params.size() == 0)
     {
+        LOG_D("Error in concatenate_call: wrong number of params");
         *_error = true;
         return nullptr;
     }
@@ -518,6 +571,7 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
     {
         if (pack.tensors[i].shape().size() != pack.tensors[0].shape().size())
         {
+            LOG_D("Error in concatenate_call: wrong shape");
             *_error = true;
             return nullptr;
         }
@@ -539,6 +593,8 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
 
     if (!estimateConcatenate_dummy((long long**)shapes, params[0], common_dims, n_tensors, out_shape))
     {
+        LOG_D("Error in concatenate_call: error in estimateConcatenate_dummy");
+
         *_error = true;
         delete[] inp_tensors;
 
@@ -567,6 +623,8 @@ uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8
 
     if (*_error)
     {
+        LOG_D("Error in concatenate_call: error in concatenate_dummy");
+
         delete[] out;
         delete[] inp_tensors;
 
@@ -605,6 +663,7 @@ uint8_t* relu_call(const operation_pack& pack, int32_t* length_out, uint8_t* _er
     
     if (n_tensor != 1)
     {
+        LOG_D("Error in relu_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -627,6 +686,7 @@ uint8_t* relu_call(const operation_pack& pack, int32_t* length_out, uint8_t* _er
 
     if (*_error)
     {
+        LOG_D("Error in relu_call: error in reluFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -646,6 +706,7 @@ uint8_t* tanh_call(const operation_pack& pack, int32_t* length_out, uint8_t* _er
     
     if (n_tensor != 1)
     {
+        LOG_D("Error in tanh_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -663,6 +724,7 @@ uint8_t* tanh_call(const operation_pack& pack, int32_t* length_out, uint8_t* _er
 
     if (*_error)
     {
+        LOG_D("Error in tanh_call: error in tanhFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -682,6 +744,7 @@ uint8_t* sigmoid_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     
     if (n_tensor != 1)
     {
+        LOG_D("Error in sigmoid_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -699,6 +762,7 @@ uint8_t* sigmoid_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
 
     if (*_error)
     {
+        LOG_D("Error in sigmoid_call: error in sigmoidFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -718,6 +782,7 @@ uint8_t* softmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     
     if (n_tensor != 1)
     {
+        LOG_D("Error in softmax_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -735,6 +800,7 @@ uint8_t* softmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
 
     if (*_error)
     {
+        LOG_D("Error in softmax_call: error in softmaxFixedLongLong");
         delete[] out;
         return nullptr;
     }
@@ -750,48 +816,56 @@ uint8_t* softmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
 
 uint8_t* logsoftmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("logsoftmax_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* softmax2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("softmax2d_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* reduction_max_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("reduction_max_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* reduction_min_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("reduction_min_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* reduction_mean_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("reduction_mean_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* reduction_sum_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("reduction_sum_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* reduction_argmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("reduction_argmax_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
 
 uint8_t* reduction_argmin_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
+    LOG_D("reduction_argmin_call has not been implemented yet");
     *_error = true;
     return nullptr;
 }
@@ -800,6 +874,7 @@ uint8_t* dropout_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
 {
     if (pack.tensors.size() != 1)
     {
+        LOG_D("Error in dropout_call: wrong number of tensors");
         *_error = true;
         return nullptr;
     }
@@ -811,6 +886,7 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
 {
     if (pack.tensors.size() != 1 || pack.tensors[0].shape().size() < 3)
     {
+        LOG_D("Error in globalavgpooling_call: wrong shape");
         *_error = true;
         return nullptr;
     }
@@ -838,6 +914,7 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
 
     if (*_error)
     {
+        LOG_D("Error in globalavgpooling_call: error in globalAvgPoolingFixedLongLong");
         delete[] buffer;
         return nullptr;
     }
@@ -854,30 +931,42 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
 
 int64_t read_opcode(const int64_t* data, uint8_t *__error)
 {
+    LOG_D("read_opcode");
     return data[3];
 }
 
 std::vector<int64_t> read_params(const int64_t* data, uint8_t *__error)
 {
+    LOG_D("read_params");
     const int64_t* data3 = data + 3;
     int64_t params_offset = data3[4] >> 3;
     int32_t n_params = data3[params_offset];
     std::vector<int64_t> params(n_params, 0);
+
+    LOG_D("n_params: " << n_params);
 
     for (int i = 0; i < n_params; ++i)
     {
         params[i] = data3[params_offset + (i + 1) * 4];
     }
 
+    LOG_D("params: " << params);
+
     return params;
 }
 
 std::vector<std::vector<uint64_t >> read_shapes(const int64_t* data, uint8_t *__error)
 {
+    LOG_D("read_shapes");
+
     const int64_t* data3 = data + 3;
     int64_t shapes_offset = data3[8] >> 3;
+
+
     int32_t n_tensor = data3[shapes_offset]; shapes_offset += 4;
     std::vector<std::vector<uint64_t>> shapes(n_tensor, std::vector<uint64_t>());
+
+    LOG_D("n_tensor: " << n_tensor);
 
     for (int i = 0; i < n_tensor; ++i)
     {
@@ -889,6 +978,7 @@ std::vector<std::vector<uint64_t >> read_shapes(const int64_t* data, uint8_t *__
         {
             if (data3[offset] <= 0)
             {
+                LOG_D("Error in reading shapes");
                 *__error = true;
                 return {};
             }
@@ -897,17 +987,22 @@ std::vector<std::vector<uint64_t >> read_shapes(const int64_t* data, uint8_t *__
         }
     }
 
+    LOG_D("shapes: " << shapes);
+
     return shapes;
 }
 
 std::vector<TensorWrapper> read_tensors(const int64_t* data, uint8_t *__error)
 {
+    LOG_D("read_tensors");
+
     const int64_t* data3 = data + 3;
     int64_t tensors_offset = data3[12] >> 3;
     std::vector<std::vector<uint64_t>> shapes = read_shapes(data, __error);
 
     if (*__error || data3[tensors_offset] != shapes.size())
     {
+        LOG_D("Error in reading shapes");
         *__error = true;
         std::cerr << "Error in reading shapes" << *__error << " " <<  data3[tensors_offset] << " " << shapes.size() << std::endl;
         return {};
@@ -916,8 +1011,11 @@ std::vector<TensorWrapper> read_tensors(const int64_t* data, uint8_t *__error)
     tensors_offset += 4;
     std::vector<TensorWrapper> tensors;
 
+    LOG_D("shapes.size(): " << shapes.size());
+    LOG_D("start scanning tensors data: ");
     for (int i = 0; i < shapes.size(); ++i)
     {
+        LOG_D("i: " << i);
         int offset = tensors_offset + (data3[tensors_offset + (i << 2)] >> 3);
         int cnt = data3[offset]; offset += 4;
 
@@ -942,6 +1040,8 @@ std::vector<TensorWrapper> read_tensors(const int64_t* data, uint8_t *__error)
 
 operation_pack abi_decode_op(const int64_t* inp, uint8_t *__error)
 {
+    LOG_D("abi_decode_op");
+
     auto opcode = read_opcode(inp, __error);
     auto params = read_params(inp, __error);
     auto tensors = read_tensors(inp, __error);
@@ -952,6 +1052,8 @@ operation_pack abi_decode_op(const int64_t* inp, uint8_t *__error)
 
 uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
 {
+    LOG_D("abi_encode_tensor");
+
     const std::vector<uint64_t>& shape = tensor.shape();
     const int64_t* data = tensor.data();
 
@@ -1025,12 +1127,14 @@ const uint8_t* cuda_execute_operation(
     }
 
     operation_pack pack = abi_decode_op(inp, _error);
+    LOG_D("opcode: " << pack.op);
 
     auto wrap_return_fn = [&](uint8_t* out = nullptr) -> uint8_t* {
         delete[] inp;
 
         if (out == nullptr)
         {
+            LOG_D("Error in cuda_execute_operation: error in operation");
             *_error = true;
         }
 
@@ -1161,7 +1265,6 @@ const uint8_t* cuda_execute_operation(
     {
         return wrap_return_fn(reduction_mean_call(pack, length_out, _error));
     }
-
     if (pack.op == opcode::REDUCTION_SUM)
     {
         return wrap_return_fn(reduction_sum_call(pack, length_out, _error));
@@ -1198,25 +1301,3 @@ void deallocate_cpp_response(const uint8_t* payload)
         delete[] payload;
     }
 }
-
-// int main(int argc, char** argv)
-// {
-//     std::string file = argv[1];
-    
-//     std::ifstream inf(file, std::ios::binary);
-//     inf.seekg(0, std::ios::end);
-//     int nbytes = inf.tellg();
-//     inf.seekg(0, std::ios::beg);
-
-//     uint8_t* payload = new uint8_t[nbytes];
-
-//     inf.read((char *) payload, nbytes);
-    
-//     bool _error = false;
-//     int32_t length = 0;
-//     uint8_t* output = cuda_execute_operation(payload, nbytes, &length, &_error);
-
-//     delete[] payload;
-//     delete[] output;
-//     return 0;
-// }

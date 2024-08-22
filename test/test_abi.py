@@ -25,11 +25,10 @@ def benchmark_abi():
     n_cases = 1
 
     futures = []
-    with ProcessPoolExecutor(max_workers=2) as executor:
-        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-            futures.append(executor.submit(run_case))
+    for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+        futures.append(run_case())
 
-    fails = sum([not f.result() for f in futures])
+    fails = sum([not f for f in futures])
     success = n_cases - fails
 
     print(f'Success: {success}/{n_cases}')

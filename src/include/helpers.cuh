@@ -24,36 +24,31 @@ template <class T>
 std::ostream &operator << (std::ostream &s, const std::vector<T> &a) {
 	s << "[";
 
-    for (int i = 0; i < a.size() - 1; ++i)
+    for (const auto& x: a)
     {
-        s << a[i] << ", ";
-    }
-
-    if (a.size() > 0)
-    {
-        s << a[a.size() - 1];
+        s << x << " ";
     }
 
 	return s << "]";
 }
 
-std::ostream &operator << (std::ostream &s, const TensorWrapper& a) {
-    s << "Tensor(" << a.shape() << ") : ";
-    int prod = 1;
-    for (const auto& x: a.shape())
-    {
-        prod *= x;
-    }
+// std::ostream &operator << (std::ostream &s, const TensorWrapper& a) {
+//     s << "Tensor(" << a.shape() << ") : ";
+//     int prod = 1;
+//     for (const auto& x: a.shape())
+//     {
+//         prod *= x;
+//     }
 
-    const int64_t* ref = a.data();
+//     const int64_t* ref = a.data();
 
-    for (int i = 0; i < prod; ++i)
-    {
-        s << ref[i] << " ";
-    }
+//     for (int i = 0; i < prod; ++i)
+//     {
+//         s << ref[i] << " ";
+//     }
 
-    return s;
-}
+//     return s;
+// }
 
 
 #endif // __UTILITIES_H__
