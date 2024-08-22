@@ -1132,6 +1132,7 @@ const uint8_t* cuda_execute_operation(
     auto wrap_return_fn = [&](uint8_t* out = nullptr) -> uint8_t* {
         delete[] inp;
 
+	LOG_D("Returning " << out);
         if (out == nullptr)
         {
             LOG_D("Error in cuda_execute_operation: error in operation");
@@ -1296,6 +1297,7 @@ const uint8_t* cuda_execute_operation(
 // extern "C"
 void deallocate_cpp_response(const uint8_t* payload)
 {
+    LOG_D("Deallocating" << payload);
     if (payload != nullptr)
     {
         delete[] payload;
