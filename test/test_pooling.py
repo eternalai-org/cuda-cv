@@ -10,8 +10,8 @@ from utils import absolute_or_relative_error
 def run_case(*args): 
     eps = 1e-4
 
-    spatial_size = random.randint(16, 1024)
-    channel_in = random.randint(1, 255)
+    spatial_size = random.randint(16, 256)
+    channel_in = random.randint(1, 256)
     
     t = Tensor.random_tensor([spatial_size, spatial_size, channel_in])
     window_size = random.randint(1, min(16, spatial_size))
@@ -61,14 +61,13 @@ def run_case(*args):
     return res
     
 def benchmark_pooling():
-    n_cases = 10 
+    n_cases = 100 
 
     futures = []
-    with ProcessPoolExecutor(max_workers=2) as executor:
-        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-            futures.append(executor.submit(run_case))
+    for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+        futures.append(run_case())
 
-    fails = sum([not f.result() for f in futures])
+    fails = sum([not f for f in futures])
     success = n_cases - fails
 
     print(f'Success: {success}/{n_cases}')
