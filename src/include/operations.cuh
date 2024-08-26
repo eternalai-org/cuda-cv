@@ -43,6 +43,7 @@ long long __meanReduction(long long* inp, int n, uint8_t* error);
 long long __stdReduction(long long* inp, int n, uint8_t* error);
 void __maxMinScale(long long* inp, long long* out, int n, uint8_t* error);
 void __zScore(long long* inp, long long* out, long long eps, int n, uint8_t* error);
+void __channelWiseSumReduction(long long* inp, long long* out, int n, int c, uint8_t* error);
 
 // merging
 void __concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n, uint8_t* error);

@@ -830,30 +830,150 @@ uint8_t* softmax2d_call(const operation_pack& pack, int32_t* length_out, uint8_t
 
 uint8_t* reduction_max_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("reduction_max_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in reduction_max_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    
+    int64_t prod = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    int64_t* out = new int64_t[1];
+    std::vector<uint64_t> out_shape = {1};
+
+    out[0] = __maxReduction(
+        (long long*)pack.tensors[0].data(), 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        LOG_D("Error in reduction_max_call: error in maxReduction");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(out_shape, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* reduction_min_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("reduction_min_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in reduction_max_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    
+    int64_t prod = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    int64_t* out = new int64_t[1];
+    std::vector<uint64_t> out_shape = {1};
+
+    out[0] = __minReduction(
+        (long long*)pack.tensors[0].data(), 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        LOG_D("Error in reduction_max_call: error in maxReduction");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(out_shape, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* reduction_mean_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("reduction_mean_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in reduction_max_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    
+    int64_t prod = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    int64_t* out = new int64_t[1];
+    std::vector<uint64_t> out_shape = {1};
+
+    out[0] = __meanReduction(
+        (long long*)pack.tensors[0].data(), 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        LOG_D("Error in reduction_max_call: error in maxReduction");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(out_shape, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* reduction_sum_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("reduction_sum_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in reduction_max_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    
+    int64_t prod = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    int64_t* out = new int64_t[1];
+    std::vector<uint64_t> out_shape = {1};
+
+    out[0] = __sumReduction(
+        (long long*)pack.tensors[0].data(), 
+        prod, 
+        _error
+    );
+
+    if (*_error)
+    {
+        LOG_D("Error in reduction_max_call: error in maxReduction");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(out_shape, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* reduction_argmax_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
@@ -882,9 +1002,51 @@ uint8_t* dropout_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     return abi_encode_tensor(pack.tensors[0], length_out);
 }
 
+uint8_t* channel_wise_sum_reduction_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
+{
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in dropout_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    uint64_t prod = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>());
+    uint64_t channel = inp.back();
+
+    int64_t* out = new int64_t[channel];
+    
+    __channelWiseSumReduction(
+        (long long*)pack.tensors[0].data(), 
+        (long long*)out, 
+        prod, 
+        channel, 
+        _error
+    );
+
+    if (*_error)
+    {
+        LOG_D("Error in channel_wise_sum_reduction_call: error in channelWiseSumReduction");
+        delete[] out;
+        return nullptr;
+    }
+
+    std::vector<uint64_t> shape_out = {channel};
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(shape_out, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
+}
+
+
 uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    if (pack.tensors.size() != 1 || pack.tensors[0].shape().size() < 3)
+    if (pack.tensors.size() != 1)
     {
         LOG_D("Error in globalavgpooling_call: wrong shape");
         *_error = true;
@@ -892,23 +1054,15 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
     }
 
     const std::vector<uint64_t>& inp = pack.tensors[0].shape();
-    std::vector<uint64_t> out_shape;
     
-    for (int i = 0; i < inp.size() - 3; ++i)
-    {
-        out_shape.push_back(inp[i]);
-    }
-
-    out_shape.push_back(inp.back());
-    
-    int64_t prod = std::accumulate(out_shape.begin(), out_shape.end(), 1, std::multiplies<int64_t>()); 
+    int64_t prod = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>()); 
     int64_t* buffer = new int64_t[prod];
 
     __globalAvgPoolingFixedLongLong(
         (long long*)pack.tensors[0].data(), 
         (long long*)buffer, 
-        prod / out_shape.back(), 1,
-        out_shape.back(), 
+        prod, 1,
+        inp.back(), 
         _error
     );
 
@@ -920,7 +1074,7 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
     }
 
     uint8_t* out_bytes = abi_encode_tensor(
-        TensorWrapper(out_shape, buffer), 
+        TensorWrapper({inp.back()}, buffer), 
         length_out
     );
 

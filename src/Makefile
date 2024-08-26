@@ -91,8 +91,14 @@ test_pooling: libcomputelib.so
 test_conv2d: libcomputelib.so
 	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_conv2d.py
 
-test_normalization: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_normalization.py
+test_norm: libcomputelib.so
+	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_norm.py
+
+test_reduction: libcomputelib.so
+	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_reduction.py
+
+benchmark: libcomputelib.so
+	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/benchmark.py
 
 release: libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi

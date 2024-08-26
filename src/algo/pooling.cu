@@ -20,12 +20,14 @@ void globalAvgPoolingFixedLongLong_impl(
     const int block_sz = 512;
     const int block_sz2 = block_sz * 2;
     const int grid_sz_x = (h * w + block_sz2 - 1) / block_sz2;
-    const int grid_sz_z = in_channel;
 
     long long* blockSum;
-    cudaMalloc(&blockSum, sizeof(long long) * grid_sz_x * grid_sz_z);
+    cudaMalloc(&blockSum, sizeof(long long) * grid_sz_x * in_channel);
 
-    sumReductionV2_kernel<<<dim3(grid_sz_x, 1, grid_sz_z), block_sz, sizeof(long long) * block_sz2>>>(
+    sumReductionV2_kernel<<<
+        dim3(grid_sz_x, 1, in_channel), 
+        dim3(block_sz, 1, 1), 
+        sizeof(long long) * block_sz2>>>(
         inp, blockSum, h * w, in_channel
     );
 
@@ -257,7 +259,7 @@ void __globalAvgPoolingFixedLongLong(
     {
         out[i] = FixedLongLong::div(
             out[i], 
-            FixedLongLong::mul(FixedLongLong::fromInt(h), FixedLongLong::fromInt(w))
+            (1LL * h * w ) << 32
         );
     }
 

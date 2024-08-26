@@ -383,10 +383,10 @@ __global__ void sumReductionV2_kernel(long long* d_gpu, long long* blockOutput, 
     s_out[tid] = 0;
     s_out[tid + blockDim.x] = 0;
 
-    if (glbl_tid < n)
+    if (glbl_tid < n * c)
     {
         s_out[tid] = d_gpu[glbl_tid];
-        if (glbl_tid + blockDim.x < n)
+        if (glbl_tid + blockDim.x * c < n * c)
             s_out[tid + blockDim.x] = d_gpu[glbl_tid + blockDim.x * c];
     }
     __syncthreads();
@@ -399,7 +399,7 @@ __global__ void sumReductionV2_kernel(long long* d_gpu, long long* blockOutput, 
     }
 
     if (tid == 0)
-        blockOutput[blockIdx.x * c] = s_out[0];
+        blockOutput[blockIdx.x * c + z] = s_out[0];
 }
 
 __global__ void mat_add_fixed_longlong(long long *A, long long *B, long long *C, int n) {

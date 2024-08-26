@@ -74,7 +74,7 @@ long long minReduction_impl(long long* d_gpu, int n, uint8_t* error)
     cudaMalloc(&blockMin, grid_sz * sizeof(long long));
     cudaMemset(blockMin, 0, grid_sz * sizeof(long long));
 
-    sumReduction_kernel<<<grid_sz, block_sz, block_sz2 * sizeof(long long)>>>(d_gpu, blockMin, n);
+    minReduction_kernel<<<grid_sz, block_sz, block_sz2 * sizeof(long long)>>>(d_gpu, blockMin, n);
 
     if (grid_sz > 1)
     {
@@ -87,6 +87,33 @@ long long minReduction_impl(long long* d_gpu, int n, uint8_t* error)
 
     cudaFree(blockMin);
     return res;
+}
+
+void channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error)
+{
+    long long* blockSum;
+
+    const int block_size = 512;
+    const int block_size_2 = block_size * 2;
+    const int blocks = (n + block_size_2 - 1) / block_size_2;
+
+    cudaMalloc(&blockSum, blocks * c * sizeof(long long));
+
+    sumReductionV2_kernel<<<
+        dim3(blocks, 1, c), 
+        dim3(block_size, 1, 1), 
+        sizeof(long long) * block_size_2>>>(d_gpu, blockSum, n, c);
+
+    if (blocks > 1)
+    {
+        channelWiseSumReduction_impl(blockSum, d_out, blocks, c, error);
+    }
+    else
+    {
+        cudaMemcpy(d_out, blockSum, c * sizeof(long long), cudaMemcpyDeviceToDevice);
+    }
+
+    cudaFree(blockSum);
 }
 
 long long __sumReduction(long long* inp, int n, uint8_t* error)
@@ -146,4 +173,14 @@ void __zScore(long long* inp, long long* out, long long eps, int n, uint8_t* err
 {
     long long mean = __meanReduction(inp, n, error); 
     long long std = __stdReduction(inp, n, error);
+}
+
+void __channelWiseSumReduction(long long* inp, long long* out, int n, int c, uint8_t* error)
+{
+    long long* d_gpu = nullptr;
+    cudaMalloc(&d_gpu, (n * c + c) * sizeof(long long));
+    cudaMemcpy(d_gpu + c, inp, n * c * sizeof(long long), cudaMemcpyHostToDevice);
+    channelWiseSumReduction_impl(d_gpu + c, d_gpu, n, c, error);
+    cudaMemcpy(out, d_gpu, c * sizeof(long long), cudaMemcpyDeviceToHost);
+    cudaFree(d_gpu);
 }

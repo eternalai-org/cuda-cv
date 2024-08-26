@@ -1,5 +1,6 @@
 import numpy as np
 import ctypes
+import os
 
 def compress_uint256(a1 = 0, a2 = 0, a3 = 0, a4 = 0):
         return a4 + (a3 << 64) + (a2 << 128) + (a1 << 192)
@@ -44,3 +45,7 @@ def compare_tensors(t1, t2, eps=1e-6):
 
 def absolute_or_relative_error(a, b): # absolute or relative error
     return np.abs(a - b) / np.maximum(1.0, b)
+
+def log(*msg):
+    if 'BENCHMARK_LOGGING_SILENT' not in os.environ:
+        print(*msg)

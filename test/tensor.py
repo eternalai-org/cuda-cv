@@ -47,3 +47,14 @@ class Tensor(object):
         flatten = np.prod(shapes)
         tensor = np.random.rand(flatten).astype(np.float64)
         return Tensor(tensor, shapes)
+    
+    @staticmethod
+    def zeros_tensor(s=None) -> 'Tensor':
+        if s is not None:
+            shapes = s
+        else:
+            shapes = [random.randint(1, 10) for _ in range(4)]
+
+        flatten = np.prod(shapes)
+        tensor = np.zeros(flatten).astype(np.float64) - 0.5
+        return Tensor(tensor, shapes)
