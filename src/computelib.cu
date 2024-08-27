@@ -480,8 +480,9 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
     const std::vector<int64_t>& params = pack.params;
 
-    const int h_in = inp[0], w_in = inp[1], c_in = inp[2];
-    LOG_D("h_in: " << h_in << " w_in: " << w_in << " c_in: " << c_in);
+    const int h_in = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>()), c_in = inp[2];
+
+    LOG_D("h_in: " << h_in << " c_in: " << c_in);
 
     if (ma.size() != 1 || mv.size() != 1 || gama.size() != 1 || beta.size() != 1)
     {
@@ -497,7 +498,7 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
         return nullptr;
     }
 
-    int64_t* out = new int64_t[h_in * w_in * c_in];
+    int64_t* out = new int64_t[h_in * c_in];
     __batchNormalizeFixedLongLong(
         (long long*)pack.tensors[0].data(), // inp
         (long long*)out, 
@@ -506,7 +507,7 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
         (long long*)pack.tensors[3].data(), // gama
         (long long*)pack.tensors[4].data(), // beta 
         params[0], // epsilon
-        h_in, w_in, c_in, 
+        h_in, 1, c_in, 
         _error
     );
 
