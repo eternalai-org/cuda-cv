@@ -7,6 +7,16 @@
 #include <tensor.h>
 #include <vector>
 #include <iostream>
+#include <fixedlonglong32x32.cuh>
+
+template<class t>
+class array_view {
+public:
+    t *begin, *end;
+    array_view(t *begin, t *end) : begin(begin), end(end) {}
+    array_view(t *begin, int size) : begin(begin), end(begin + size) {}
+    array_view(std::vector<t> &v) : begin(v.data()), end(v.data() + v.size()) {}
+};
 
 void printmat3d(long long* mat, int h, int w, int c);
 
@@ -20,6 +30,10 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
+std::ostream &operator << (std::ostream &s, const FixedLongLong::FixedLongLongType &a) {
+	return s << 1.0f * a.value / FixedLongLong::ONE;
+}
+
 template <class T> 
 std::ostream &operator << (std::ostream &s, const std::vector<T> &a) {
 	s << "[";
@@ -30,6 +44,21 @@ std::ostream &operator << (std::ostream &s, const std::vector<T> &a) {
     }
 
 	return s << "]";
+}
+
+template <class T> 
+std::ostream &operator << (std::ostream &s, const array_view<T>& a) {
+	for (T* it = a.begin; it != a.end; ++it)
+    {
+        s << *it;
+
+        if (it != a.end - 1)
+        {
+            s << ", ";
+        }
+    }
+    
+    return s;
 }
 
 // std::ostream &operator << (std::ostream &s, const TensorWrapper& a) {

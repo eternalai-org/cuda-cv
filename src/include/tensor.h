@@ -5,6 +5,7 @@
 #include <cstring>
 #include <assert.h>
 #include <memory>
+#include <numeric>
 
 class  TensorWrapper {
     std::vector<uint64_t> mshape;
@@ -44,6 +45,11 @@ public:
     std::vector<uint64_t> shape() const 
     {
         return mshape;
+    }
+
+    uint64_t size() const
+    {
+        return std::accumulate(mshape.begin(), mshape.end(), 1, std::multiplies<uint64_t>());
     }
 
     int64_t* data() const {

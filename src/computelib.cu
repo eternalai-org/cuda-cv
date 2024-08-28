@@ -11,10 +11,16 @@
 #include <numeric>
 #include <helpers.cuh>
 
-#if defined(LOGGING_DEBUG)
+#if defined(LOGGING_DEBUG) || defined(LOGGING_VERBOSE)
 #define LOG_D(x) std::cerr << "[DEBUG][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
 #else
 #define LOG_D(x)
+#endif
+
+#if defined(LOGGING_VERBOSE)
+#define LOG_V(x) std::cerr << "[VERBOSE][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
+#else
+#define LOG_V(x)
 #endif
 
 uint8_t* conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
@@ -1211,12 +1217,7 @@ uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
     const std::vector<uint64_t>& shape = tensor.shape();
     const int64_t* data = tensor.data();
 
-    int64_t prod = 1;
-    for (const int& x: shape)
-    {
-        prod *= x;
-    }
-
+    int64_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
     int64_t padded_prod = ((prod + 3) >> 2) << 2;
 
     // (2 offsets, 2 counts and a list of number) * 32 bytes + data (8 bytes) * prod
@@ -1236,6 +1237,10 @@ uint8_t* abi_encode_tensor(const TensorWrapper& tensor, int32_t* length)
     {
         out_int64[offset] = shape[i];
     }
+
+#ifdef LOGGING_VERBOSE 
+    LOG_V("Returning Tensor of shape: " << shape << "; Data: " << array_view<FixedLongLong::FixedLongLongType>((FixedLongLong::FixedLongLongType*)out_int64 + 12, prod));
+#endif // LOGGING_VERBOSE 
 
     uint8_t* out = new uint8_t[*length];
 
@@ -1282,11 +1287,21 @@ const uint8_t* cuda_execute_operation(
 
     operation_pack pack = abi_decode_op(inp, _error);
     LOG_D("opcode: " << pack.op);
+    LOG_D("Input Tensors: " << pack.tensors.size());
+
+#ifdef LOGGING_VERBOSE
+    for (const auto& x: pack.tensors)
+    {
+        LOG_D(std::string(80, '-'));
+        LOG_D("Tensor of shape: " << x.shape() << "; Data: " << array_view<FixedLongLong::FixedLongLongType>((FixedLongLong::FixedLongLongType*)x.data(), x.size()));
+    }
+#endif // LOGGING_VERBOSE 
 
     auto wrap_return_fn = [&](uint8_t* out = nullptr) -> uint8_t* {
         delete[] inp;
 
-	LOG_D("Returning " << out);
+	    LOG_D("Returning " << out << "; of length " << *length_out << "; error: " << int(*_error));
+
         if (out == nullptr)
         {
             LOG_D("Error in cuda_execute_operation: error in operation");

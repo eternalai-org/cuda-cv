@@ -6,6 +6,14 @@
 #include <assert.h>
 
 namespace FixedLongLong {
+
+class FixedLongLongType {
+public:
+    long long value;
+    FixedLongLongType(long long value) : value(value) {}
+    FixedLongLongType() : value(0) {}
+};
+
     static const long long MIN = LLONG_MIN;
     static const long long MAX = LLONG_MAX;
     static const long long ONE = 1LL << 32;
