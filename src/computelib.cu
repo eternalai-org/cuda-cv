@@ -463,7 +463,6 @@ uint8_t* transform_sqrt_call(const operation_pack& pack, int32_t* length_out, ui
 
 uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("batch_norm_call has not been implemented yet");
     // inp, ma, mv, gama, beta
     if (pack.tensors.size() != 5)
     {
@@ -480,7 +479,7 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
     const std::vector<int64_t>& params = pack.params;
 
-    const int h_in = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>()), c_in = inp[2];
+    const int h_in = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>()), c_in = inp.back();
 
     LOG_D("h_in: " << h_in << " c_in: " << c_in);
 
@@ -1086,7 +1085,7 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
 
 int64_t read_opcode(const int64_t* data, uint8_t *__error)
 {
-    LOG_D("read_opcode");
+    LOG_D("read_opcode: " << data[3]);
     return data[3];
 }
 
