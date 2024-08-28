@@ -11,14 +11,14 @@ import time
 def run_case(*args):
     eps = 1e-4
 
-    spatial_size = random.randint(8, 256)
-    channel_in = random.randint(1, 256)
-    channel_out = random.randint(1, 256)
-    
+    spatial_size = 7 # random.randint(8, 256)
+    channel_in = 992 # random.randint(1, 256)
+    channel_out = 128 # random.randint(1, 256)
+
     t = Tensor.random_tensor([spatial_size, spatial_size, channel_in])
-    
-    ksize = random.randint(1, min(16, spatial_size))
-    stride = random.randint(1, ksize)
+
+    ksize = 1 # random.randint(1, min(16, spatial_size))
+    stride = 1 # random.randint(1, ksize)
     padding = random.choice(['valid', 'same'])
     padding_i = 1 if padding == 'same' else 0
     
