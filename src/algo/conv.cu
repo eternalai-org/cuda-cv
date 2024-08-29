@@ -61,7 +61,11 @@ void __conv2dFixedLongLong(
     const uint64_t outFlatSize = out_h * out_w * out_channel;
     const uint64_t cudaMemSize = inpFlatSize + outFlatSize + kernelFlatSize + out_channel;
 
-    cudaMalloc(&d_gpu, cudaMemSize * sizeof(long long));
+    if (*error = cuda_fmt_error(cudaMalloc(&d_gpu, cudaMemSize * sizeof(long long))))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
 
     if (padding == 1)
     {
@@ -80,16 +84,35 @@ void __conv2dFixedLongLong(
             }
         }
 
-        cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+        {
+            cudaFree(d_gpu);
+            delete[] padded_inp;
+            return;
+        }
         delete[] padded_inp;
     }
     else
     {
-        cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+        {
+            cudaFree(d_gpu);
+            return;
+        }
+        
     }
 
-    cudaMemcpy(d_gpu + inpFlatSize, kernel, kernelFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_gpu + inpFlatSize + kernelFlatSize, bias, out_channel * sizeof(long long), cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize, kernel, kernelFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
+    
+    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize + kernelFlatSize, bias, out_channel * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
 
     const int BLOCK_SIZE = 32;
 
@@ -106,11 +129,13 @@ void __conv2dFixedLongLong(
         out_w, out_h, padding, stride_h, stride_w
     );
 
-    cudaMemcpy(
-        out, d_gpu + inpFlatSize + kernelFlatSize + out_channel, 
-        out_h * out_w * out_channel * sizeof(long long), 
-        cudaMemcpyDeviceToHost
-    );
+    
+    if (*error = cuda_fmt_error(cudaMemcpy(out, d_gpu + inpFlatSize + kernelFlatSize + out_channel, 
+        out_h * out_w * out_channel * sizeof(long long), cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
 
     cudaFree(d_gpu);
 }     

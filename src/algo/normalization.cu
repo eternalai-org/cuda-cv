@@ -30,12 +30,42 @@ void __batchNormalizeFixedLongLong(
 ) 
 {
     long long *gpu;
-    cudaMalloc(&gpu, (h * w * c * 2 + 4 * c) * sizeof(long long));
-    cudaMemcpy(gpu, X, h * w * c * sizeof(long long), cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu + h * w * c * 2, ma, c * sizeof(long long), cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu + h * w * c * 2 + c, mv, c * sizeof(long long), cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu + h * w * c * 2 + c * 2, gamma, c * sizeof(long long), cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu + h * w * c * 2 + c * 3, beta, c * sizeof(long long), cudaMemcpyHostToDevice);
+    
+    if (*error = cuda_fmt_error(cudaMalloc(&gpu, (h * w * c * 2 + 4 * c) * sizeof(long long))))
+    {
+        cudaFree(gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu, X, h * w * c * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    } 
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu + h * w * c * 2, ma, c * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu + h * w * c * 2 + c, mv, c * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    } 
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu + h * w * c * 2 + c * 2, gamma, c * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu + h * w * c * 2 + c * 3, beta, c * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    }
 
     const dim3 BLOCK_SIZE(32, 32, 1);
     const dim3 GRID_SIZE(
@@ -55,6 +85,10 @@ void __batchNormalizeFixedLongLong(
         h, w, c
     );
 
-    cudaMemcpy(Y, gpu + h * w * c, h * w * c * sizeof(long long), cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(Y, gpu + h * w * c, h * w * c * sizeof(long long), cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(gpu);
+        return;
+    }
     cudaFree(gpu);
 }

@@ -7,13 +7,35 @@ void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, uint8_t* e
     float *gpu_B;
     float *gpu_C;
 
-    cudaMalloc((void **) &gpu_A, sizeof(float) * m * n);
-    cudaMemcpy(gpu_A, A, sizeof(float) * m * n, cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_A, sizeof(float) * m * n)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
 
-    cudaMalloc((void **) &gpu_B, sizeof(float) * n * k);
-    cudaMemcpy(gpu_B, B, sizeof(float) * n * k, cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_A, A, sizeof(float) * m * n, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
 
-    cudaMalloc((void **) &gpu_C, sizeof(float) * m * k);
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(float) * n * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(float) * n * k, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(float) * m * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
 
     int BLOCK_SIZE = 16;
     // Blocks & grids:
@@ -26,7 +48,11 @@ void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, uint8_t* e
     vecmulFloat<<<grid, blocks>>>(gpu_A, gpu_B, gpu_C, m, n, k);
 
     // Get the result Matrix:
-    cudaMemcpy(C, gpu_C, sizeof(float) * m * k, cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(float) * m * k, cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
 
     //Free device matrices
     cudaFree(gpu_A);
@@ -39,9 +65,24 @@ void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int 
 
     // Allocate device memory:
     long long *gpu;
-    cudaMallocManaged(&gpu, sizeof(long long) * (m * n + n * k + m * k));
-    cudaMemcpy(gpu, A, sizeof(long long) * m * n, cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu + n * m, B, sizeof(long long) * n * k, cudaMemcpyHostToDevice);
+
+    if (*error = cuda_fmt_error(cudaMallocManaged(&gpu, sizeof(long long) * (m * n + n * k + m * k))))
+    {
+        cudaFree(gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu, A, sizeof(long long) * m * n, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu + n * m, B, sizeof(long long) * n * k, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    }
 
     int BLOCK_SIZE = 32;
     unsigned int grid_rows = (m + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -57,7 +98,11 @@ void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int 
         m, n, k
     );
 
-    cudaMemcpy(C, gpu + m * n + n * k, sizeof(long long) * m * k, cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(C, gpu + m * n + n * k, sizeof(long long) * m * k, cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(gpu);
+        return;
+    }
     cudaFree(gpu);
 }
 
@@ -68,13 +113,35 @@ void __maxmulLong(long *A, long *B, long *C, long m, long n, long k, uint8_t* er
     long *gpu_B;
     long *gpu_C;
 
-    cudaMalloc((void **) &gpu_A, sizeof(long) * m * n);
-    cudaMemcpy(gpu_A, A, sizeof(long) * m * n, cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_A, sizeof(long) * m * n)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
 
-    cudaMalloc((void **) &gpu_B, sizeof(long) * n * k);
-    cudaMemcpy(gpu_B, B, sizeof(long) * n * k, cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_A, A, sizeof(long) * m * n, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
 
-    cudaMalloc((void **) &gpu_C, sizeof(long) * m * k);
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(long) * n * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(long) * n * k, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(long) * m * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
 
     int BLOCK_SIZE = 16;
     // Blocks & grids:
@@ -87,7 +154,11 @@ void __maxmulLong(long *A, long *B, long *C, long m, long n, long k, uint8_t* er
     vecmulLong<<<grid, blocks>>>(gpu_A, gpu_B, gpu_C, m, n, k);
 
     // Get the result Matrix:
-    cudaMemcpy(C, gpu_C, sizeof(long) * m * k, cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(long) * m * k, cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
 
     //Free device matrices
     cudaFree(gpu_A);
@@ -102,13 +173,35 @@ void __maxmulInt(int *A, int *B, int *C, int m, int n, int k, uint8_t* error) {
     int *gpu_B;
     int *gpu_C;
 
-    cudaMalloc((void **) &gpu_A, sizeof(int) * m * n);
-    cudaMemcpy(gpu_A, A, sizeof(int) * m * n, cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_A, sizeof(int) * m * n)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
 
-    cudaMalloc((void **) &gpu_B, sizeof(int) * n * k);
-    cudaMemcpy(gpu_B, B, sizeof(int) * n * k, cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_A, A, sizeof(int) * m * n, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
 
-    cudaMalloc((void **) &gpu_C, sizeof(int) * m * k);
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(int) * n * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(int) * n * k, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(int) * m * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
 
     int BLOCK_SIZE = 16;
     // Blocks & grids:
@@ -121,7 +214,11 @@ void __maxmulInt(int *A, int *B, int *C, int m, int n, int k, uint8_t* error) {
     vecmulInt<<<grid, blocks>>>(gpu_A, gpu_B, gpu_C, m, n, k);
 
     // Get the result Matrix:
-    cudaMemcpy(C, gpu_C, sizeof(int) * m * k, cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(int) * m * k, cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
 
     //Free device matrices
     cudaFree(gpu_A);
@@ -139,13 +236,36 @@ void __maxmulDouble(double *A, double *B, double *C, int m, int n, int k, uint8_
     // cout << "------------------\n";
     // cout << "A = {";
     //for (int i = 0; i < m * n; ++i) cout << A[i] << (i != m * n - 1 ? ", " : "}\n");
-    cudaMalloc((void **) &gpu_A, sizeof(double) * m * n);
-    cudaMemcpy(gpu_A, A, sizeof(double) * m * n, cudaMemcpyHostToDevice);
 
-    cudaMalloc((void **) &gpu_B, sizeof(double) * n * k);
-    cudaMemcpy(gpu_B, B, sizeof(double) * n * k, cudaMemcpyHostToDevice);
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_A, sizeof(double) * m * n)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
 
-    cudaMalloc((void **) &gpu_C, sizeof(double) * m * k);
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_A, A, sizeof(double) * m * n, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(double) * n * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(double) * n * k, cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(double) * m * k)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
 
     int BLOCK_SIZE = 32;
     // Blocks & grids:
@@ -158,7 +278,12 @@ void __maxmulDouble(double *A, double *B, double *C, int m, int n, int k, uint8_
     vecmulDouble<<<grid, blocks>>>(gpu_A, gpu_B, gpu_C, m, n, k);
 
     // Get the result Matrix:
-    cudaMemcpy(C, gpu_C, sizeof(double) * m * k, cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(double) * m * k, cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
+        return;
+    }
+
     // cout << "C = {";
     // for (int i = 0; i < m * k; ++i) cout << C[i] << (i != m * k - 1 ? ", " : "}\n");
     //Free device matrices

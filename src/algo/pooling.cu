@@ -14,7 +14,12 @@ void globalAvgPoolingFixedLongLong_impl(
     const int grid_sz_x = (h * w + block_sz2 - 1) / block_sz2;
 
     long long* blockSum;
-    cudaMalloc(&blockSum, sizeof(long long) * grid_sz_x * in_channel);
+    
+    if (*error = cuda_fmt_error(cudaMalloc(&blockSum, sizeof(long long) * grid_sz_x * in_channel)))
+    {
+        cudaFree(blockSum);
+        return;
+    }
 
     sumReductionV2_kernel<<<
         dim3(grid_sz_x, 1, in_channel), 
@@ -31,7 +36,11 @@ void globalAvgPoolingFixedLongLong_impl(
     }
     else
     {
-        cudaMemcpy(out, blockSum, in_channel * sizeof(long long), cudaMemcpyDeviceToDevice);
+        if (*error = cuda_fmt_error(cudaMemcpy(out, blockSum, in_channel * sizeof(long long), cudaMemcpyDeviceToDevice)))
+        {
+            cudaFree(blockSum);
+            return;
+        }
     }
 
     cudaFree(blockSum);    
@@ -89,7 +98,11 @@ void __maxPoolingFixedLongLong(
     uint64_t outFlatSize = out_h * out_w * in_channel;
     uint64_t flatSize = inpFlatSize + outFlatSize;
 
-    cudaMalloc(&d_gpu, flatSize * sizeof(long long));
+    if (*error = cuda_fmt_error(cudaMalloc(&d_gpu, flatSize * sizeof(long long))))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
     
     if (padding == 1)
     {
@@ -104,12 +117,22 @@ void __maxPoolingFixedLongLong(
             }
         }
 
-        cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+        {
+            cudaFree(d_gpu);
+            delete[] padded_inp;
+            return;
+        }
+
         delete[] padded_inp;
     }
     else
     {
-        cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+        {
+            cudaFree(d_gpu);
+            return;
+        }
     }
     
     const int thread_x = 32, thread_y=32, thread_z=1; 
@@ -129,7 +152,11 @@ void __maxPoolingFixedLongLong(
         pad_top, pad_bottom, pad_left, pad_right
     );
 
-    cudaMemcpy(out, d_gpu + inpFlatSize, outFlatSize * sizeof(long long), cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(out, d_gpu + inpFlatSize, outFlatSize * sizeof(long long), cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
 
     cudaFree(d_gpu);
 }
@@ -186,7 +213,11 @@ void __avgPoolingFixedLongLong(
     uint64_t outFlatSize = out_h * out_w * in_channel;
     uint64_t flatSize = inpFlatSize + outFlatSize;
 
-    cudaMalloc(&d_gpu, flatSize * sizeof(long long));
+    if (*error = cuda_fmt_error(cudaMalloc(&d_gpu, flatSize * sizeof(long long))))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
     
     if (padding == 1)
     {
@@ -204,13 +235,21 @@ void __avgPoolingFixedLongLong(
                 );
             }
         }
-
-        cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+        {
+            cudaFree(d_gpu);
+            delete[] padded_inp;
+            return;
+        }
         delete[] padded_inp;
     }
     else
     {
-        cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice);
+        if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+        {
+            cudaFree(d_gpu);
+            return;
+        }
     }
 
     const int thread_x = 32, thread_y = 32, thread_z = 1;
@@ -230,7 +269,11 @@ void __avgPoolingFixedLongLong(
         pad_top, pad_bottom, pad_left, pad_right
     );
 
-    cudaMemcpy(out, d_gpu + inpFlatSize, outFlatSize * sizeof(long long), cudaMemcpyDeviceToHost);
+    if (*error = cuda_fmt_error(cudaMemcpy(out, d_gpu + inpFlatSize, outFlatSize * sizeof(long long), cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
     cudaFree(d_gpu);
 }
 
@@ -241,10 +284,26 @@ void __globalAvgPoolingFixedLongLong(
 )
 {
     long long* gpu;
-    cudaMalloc(&gpu, sizeof(long long) * (h * w * in_channel + in_channel));
-    cudaMemcpy(gpu + in_channel, inp, h * w * in_channel * sizeof(long long), cudaMemcpyHostToDevice);
+
+    if (*error = cuda_fmt_error(cudaMalloc(&gpu, sizeof(long long) * (h * w * in_channel + in_channel))))
+    {
+        cudaFree(gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(gpu + in_channel, inp, h * w * in_channel * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(gpu);
+        return;
+    }
+
     globalAvgPoolingFixedLongLong_impl(gpu + in_channel, gpu, h, w, in_channel, error);
-    cudaMemcpy(out, gpu, in_channel * sizeof(long long), cudaMemcpyDeviceToHost);
+
+    if (*error = cuda_fmt_error(cudaMemcpy(out, gpu, in_channel * sizeof(long long), cudaMemcpyDeviceToHost)))
+    {
+        cudaFree(gpu);
+        return;
+    }
 
     // assume the number of channel is not too large at the moment
     for (int i = 0; i < in_channel; ++i)
