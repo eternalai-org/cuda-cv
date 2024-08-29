@@ -120,6 +120,7 @@ void __maxPoolingFixedLongLong(
         if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
         {
             cudaFree(d_gpu);
+            delete[] padded_inp;
             return;
         }
 
@@ -237,6 +238,7 @@ void __avgPoolingFixedLongLong(
         if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, padded_inp, inpFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
         {
             cudaFree(d_gpu);
+            delete[] padded_inp;
             return;
         }
         delete[] padded_inp;

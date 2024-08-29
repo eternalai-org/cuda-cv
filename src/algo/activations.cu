@@ -27,6 +27,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_a, A, sizeof(long long)*m, cudaMemcpyHostToDevice)))
     {
         cudaFree(gpu_a);
+        delete[] buffer_tmp;
         return;
     }
 
@@ -40,6 +41,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
     if (*error = cuda_fmt_error(cudaMemcpy(buffer_tmp, gpu_a, sizeof(long long)*BUCKETS, cudaMemcpyDeviceToHost)))
     {
         cudaFree(gpu_a);
+        delete[] buffer_tmp;
         return;
     }
 
@@ -52,6 +54,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
     if (*error = cuda_fmt_error(cudaMemcpy(B, gpu_a, sizeof(long long)*m, cudaMemcpyDeviceToHost)))
     {
         cudaFree(gpu_a);
+        delete[] buffer_tmp;
         return;
     }
     cudaFree(gpu_a), cudaFree(gpu_b);
