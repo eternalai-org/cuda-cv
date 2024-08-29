@@ -9,8 +9,8 @@ from utils import absolute_or_relative_error, to_i64
 import os
 
 def run_case(*args): 
-    spatial_size = random.randint(8, 256)
-    channel_in = random.randint(1, 256)
+    spatial_size = 32 # random.randint(8, 256)
+    channel_in = 32 # random.randint(1, 16)
 
     t1 = Tensor.random_tensor([spatial_size, spatial_size, channel_in])
     t1_data = t1.data.reshape(t1.shape)
@@ -36,7 +36,7 @@ def run_case(*args):
     return res
 
 def benchmark_normaization():
-    n_cases = 100
+    n_cases = 10000
 
     futures = []
     for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):

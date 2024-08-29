@@ -1,4 +1,3 @@
-#include <kernels.cuh>
 #include <fixedlonglong32x32.cuh>
 
 __global__ void arraySum_kernel(long long* A, long long* sum, int n)

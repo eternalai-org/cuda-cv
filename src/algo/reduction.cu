@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <cuda.h>
-#include <assert.h>
-#include <cstring>
-
-#include <fixedlonglong32x32.cuh>
-#include <kernels.cuh>
 #include <operations.cuh>
 
 long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
@@ -19,6 +12,11 @@ long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
     cudaMemset(blockSum, 0, grid_sz * sizeof(long long));
 
     sumReduction_kernel<<<grid_sz, block_sz, block_sz2 * sizeof(long long)>>>(d_gpu, blockSum, n);
+    if (*error = cuda_fmt_error(cudaGetLastError()))
+    {
+        cudaFree(blockSum);
+        return 0;
+    }
 
     if (grid_sz > 1)
     {

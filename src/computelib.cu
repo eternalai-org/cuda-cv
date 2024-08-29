@@ -1,6 +1,4 @@
-#include <operations.cuh>
 #include <computelib.h>
-#include <tensor.h>
 #include <memory.h>
 #include <iostream>
 #include <fstream> 
@@ -9,7 +7,6 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
-#include <helpers.cuh>
 
 #if defined(LOGGING_DEBUG) || defined(LOGGING_VERBOSE)
 #define LOG_D(x) std::cerr << "[DEBUG][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl

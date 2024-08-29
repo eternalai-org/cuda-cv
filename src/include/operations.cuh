@@ -1,6 +1,10 @@
-#pragma once
+#ifndef __OPERATIONS_H__
+#define __OPERATIONS_H__
 
 #include <stdint.h>
+#include <helpers.cuh>
+#include <fixedlonglong32x32.cuh>
+#include <kernels.cuh>
 
 // matrix mutiplications
 void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k, uint8_t* error);
@@ -138,4 +142,6 @@ uint8_t maxmulDouble(double *A, double *B, double *C, int m, int n, int k);
 
 #if __cplusplus
 }
+#endif
+
 #endif

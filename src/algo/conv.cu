@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <cuda.h>
-#include <assert.h>
-#include <fixedlonglong32x32.cuh>
 #include <operations.cuh>
-#include <kernels.cuh>
 
 ////////////////////// implementation ///////////////////////// 
 

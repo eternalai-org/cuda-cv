@@ -1,9 +1,11 @@
-#ifndef __COMPUTE_LIB__
-#define __COMPUTE_LIB__
+#ifndef __FIXED_LL__
+#define __FIXED_LL__
 
-#include <stdio.h>
 #include <cuda.h>
 #include <assert.h>
+#include <cstring>
+#include <iostream>
+#include <math.h>
 
 namespace FixedLongLong {
 
@@ -191,9 +193,8 @@ public:
     // this function is indeterministic
     inline __device__ __host__ long long exp(const long long& x)
     {
-        return (long long)(expf(1.0f * x / (1LL << 32)) * (1LL << 32));
+        return (long long)(exp(1.0f * x / (1LL << 32)) * (1LL << 32));
     }
 }
-
 
 #endif

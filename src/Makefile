@@ -1,10 +1,10 @@
-cu_header = -I/usr/local/cuda/include
+cu_header = # -I/usr/local/cuda/include
 header = -Iinclude
 header_files = include/fixedlonglong32x32.cuh include/functional.h
 optimization = -O2
 compile_flags = -Xcompiler="-fpermissive"
 CPP_VERSION = -std=c++17
-CPP_SYMBOLS = -DLOGGING_DEBUG -DLOGGING_VERBOSE
+CPP_SYMBOLS = # -DLOGGING_DEBUG -DLOGGING_VERBOSE
 
 kernels.o: algo/kernels.cu
 	nvcc --compiler-options -fPIC -c -o kernels.o  algo/kernels.cu \
@@ -50,15 +50,17 @@ computelib.o: computelib.cu
 	nvcc --compiler-options -fPIC -c -o computelib.o computelib.cu \
 	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
 
-libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o \
-	activations.o merging.o kernels.o reduction.o wrapper.o computelib.o
-	nvcc --ptxas-options=-v -o libcomputelib.so --shared matrixmul.o element_wise_operator.o normalization.o \
-	conv.o pooling.o activations.o merging.o kernels.o reduction.o wrapper.o computelib.o \
+helpers.o: utils/helpers.cu
+	nvcc --compiler-options -fPIC -c -o helpers.o utils/helpers.cu \
 	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
 
-helpers.o: utils/helpers.cpp
-	nvcc --compiler-options -fPIC -c -o helpers.o utils/helpers.cpp \
+libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o \
+	activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o
+	nvcc --ptxas-options=-v -o libcomputelib.so --shared matrixmul.o element_wise_operator.o normalization.o \
+	conv.o pooling.o activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o \
 	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+
+
 
 main: main.cu libcomputelib.so helpers.o
 	nvcc -o main main.cu helpers.o -L. -lcomputelib 
@@ -68,37 +70,37 @@ exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main
 
 test_abi: libcomputelib.so	
-	python3 -X nogil ../test/test_abi.py
+	python3 ../test/test_abi.py
 
 test_act: libcomputelib.so
-	python3 -X nogil ../test/test_activations.py
+	python3 ../test/test_activations.py
 
 test_elementwise: libcomputelib.so
-	python3 -X nogil ../test/test_elementwise.py
+	python3 ../test/test_elementwise.py
 
 test_matmul: libcomputelib.so
-	python3 -X nogil ../test/test_matmul.py
+	python3 ../test/test_matmul.py
 
 test_transformation: libcomputelib.so
-	python3 -X nogil ../test/test_transformation.py
+	python3 ../test/test_transformation.py
 
 test_merging: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_merging.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_merging.py
 
 test_pooling: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_pooling.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_pooling.py
 
 test_conv2d: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_conv2d.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_conv2d.py
 
 test_norm: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_norm.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_norm.py
 
 test_reduction: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/test_reduction.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_reduction.py
 
 benchmark: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 -X nogil ../test/benchmark.py
+	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/benchmark.py
 
 release: libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi

@@ -1,3 +1,6 @@
+#ifndef __CUDA_KERNELS_CUH__
+#define __CUDA_KERNELS_CUH__
+
 __global__ void arraySum_kernel(long long* A, long long* sum, int n);
 __global__ void arrayExp_kernel(long long* A, long long* B, int n);
 __global__ void softmaxImplFixedLongLong(long long *expA, long long* B, int n, long long sumExp);
@@ -68,3 +71,5 @@ __global__ void conv2dImplFixedLongLong_kernel(
     int in_w, int in_h, int out_w, int out_h, // spatial size of inp,
     int padding, int stride_h, int stride_w // padding mode, one of 'valid': 0 or 'same': 1
 );
+
+#endif // __CUDA_KERNELS_CUH__
