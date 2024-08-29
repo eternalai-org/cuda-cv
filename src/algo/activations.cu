@@ -14,8 +14,8 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
     }
 
     if (*error = cuda_fmt_error(cudaMalloc((void**)&gpu_b, sizeof(long long)*m)))
-    {
-        cudaFree(gpu_b);
+    {   
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
     
@@ -26,7 +26,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
 
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_a, A, sizeof(long long)*m, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_a);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         delete[] buffer_tmp;
         return;
     }
@@ -40,7 +40,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
     
     if (*error = cuda_fmt_error(cudaMemcpy(buffer_tmp, gpu_a, sizeof(long long)*BUCKETS, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_a);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         delete[] buffer_tmp;
         return;
     }
@@ -53,7 +53,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
     softmaxImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu_b, gpu_a, m, sumExp);
     if (*error = cuda_fmt_error(cudaMemcpy(B, gpu_a, sizeof(long long)*m, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_a);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         delete[] buffer_tmp;
         return;
     }
@@ -74,7 +74,7 @@ void __sigmoidFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
 
     if (*error = cuda_fmt_error(cudaMalloc((void**)&gpu_b, sizeof(long long)*m)))
     {
-        cudaFree(gpu_b);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
 
@@ -83,14 +83,14 @@ void __sigmoidFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
  
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_a, A, sizeof(long long)*m, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_a);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
     sigmoidImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu_a, gpu_b, m);
 
     if (*error = cuda_fmt_error(cudaMemcpy(B, gpu_b, sizeof(long long)*m, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_b);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
     cudaFree(gpu_a), cudaFree(gpu_b);
@@ -109,7 +109,7 @@ void __tanhFixedLongLong(long long *A, long long *B, int m, uint8_t* error)
 
     if (*error = cuda_fmt_error(cudaMalloc((void**)&gpu_b, sizeof(long long)*m)))
     {
-        cudaFree(gpu_b);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
 
@@ -118,14 +118,14 @@ void __tanhFixedLongLong(long long *A, long long *B, int m, uint8_t* error)
 
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_a, A, sizeof(long long)*m, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_a);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
     tanhImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu_a, gpu_b, m);
 
     if (*error = cuda_fmt_error(cudaMemcpy(B, gpu_b, sizeof(long long)*m, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_b);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
     cudaFree(gpu_a), cudaFree(gpu_b);
@@ -144,7 +144,7 @@ void __reluFixedLongLong(long long *A, long long *B, int m, uint8_t* error)
 
     if (*error = cuda_fmt_error(cudaMalloc((void**)&gpu_b, sizeof(long long)*m)))
     {
-        cudaFree(gpu_b);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
 
@@ -153,14 +153,14 @@ void __reluFixedLongLong(long long *A, long long *B, int m, uint8_t* error)
 
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_a, A, sizeof(long long)*m, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_a);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
     reluImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu_a, gpu_b, m);
 
     if (*error = cuda_fmt_error(cudaMemcpy(B, gpu_b, sizeof(long long)*m, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_b);
+        cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
     cudaFree(gpu_a), cudaFree(gpu_b);

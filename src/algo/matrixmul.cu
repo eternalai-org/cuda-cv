@@ -21,19 +21,19 @@ void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, uint8_t* e
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(float) * n * k)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(float) * n * k, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(float) * m * k)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
@@ -50,7 +50,7 @@ void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, uint8_t* e
     // Get the result Matrix:
     if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(float) * m * k, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
@@ -127,19 +127,19 @@ void __maxmulLong(long *A, long *B, long *C, long m, long n, long k, uint8_t* er
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(long) * n * k)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(long) * n * k, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(long) * m * k)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
@@ -156,7 +156,7 @@ void __maxmulLong(long *A, long *B, long *C, long m, long n, long k, uint8_t* er
     // Get the result Matrix:
     if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(long) * m * k, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
@@ -187,19 +187,19 @@ void __maxmulInt(int *A, int *B, int *C, int m, int n, int k, uint8_t* error) {
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(int) * n * k)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(int) * n * k, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(int) * m * k)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
@@ -216,7 +216,7 @@ void __maxmulInt(int *A, int *B, int *C, int m, int n, int k, uint8_t* error) {
     // Get the result Matrix:
     if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(int) * m * k, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
@@ -251,19 +251,19 @@ void __maxmulDouble(double *A, double *B, double *C, int m, int n, int k, uint8_
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_B, sizeof(double) * n * k)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMemcpy(gpu_B, B, sizeof(double) * n * k, cudaMemcpyHostToDevice)))
     {
-        cudaFree(gpu_B);
+        cudaFree(gpu_A), cudaFree(gpu_B);
         return;
     }
 
     if (*error = cuda_fmt_error(cudaMalloc((void **) &gpu_C, sizeof(double) * m * k)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
@@ -280,7 +280,7 @@ void __maxmulDouble(double *A, double *B, double *C, int m, int n, int k, uint8_
     // Get the result Matrix:
     if (*error = cuda_fmt_error(cudaMemcpy(C, gpu_C, sizeof(double) * m * k, cudaMemcpyDeviceToHost)))
     {
-        cudaFree(gpu_C);
+        cudaFree(gpu_A), cudaFree(gpu_B), cudaFree(gpu_C);
         return;
     }
 
