@@ -1,11 +1,5 @@
-#include <stdio.h>
-#include <cuda.h>
-#include <assert.h>
-#include <string.h>
-
-#include <fixedlonglong32x32.cuh>
-#include <kernels.cuh>
 #include <operations.cuh>
+
 
 void __concatenate(long long* inp, long long* out, long long* shapes, long long axis, long long ndims, long long n, uint8_t* error)
 {

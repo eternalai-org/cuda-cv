@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <cuda.h>
-#include <iostream>
-#include <assert.h>
-
-#include <fixedlonglong32x32.cuh>
-#include <kernels.cuh>
 #include <operations.cuh>
 
 
@@ -47,6 +40,7 @@ void __matSubLongLong(long long *A, long long *B, long long *C, int m, int n, ui
 
     cudaMemcpy(C, gpu + 2 * N, sizeof(long long) * N, cudaMemcpyDeviceToHost);
     cudaFree(gpu);
+    
 }
 
 void __matMulLongLong(long long *A, long long *B, long long *C, int m, int n, uint8_t* error) {

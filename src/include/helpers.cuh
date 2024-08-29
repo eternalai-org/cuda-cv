@@ -4,56 +4,49 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <tensor.h>
 #include <vector>
 #include <iostream>
+#include <fixedlonglong32x32.cuh>
 
-void printmat3d(long long* mat, int h, int w, int c);
-
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess) 
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
-}
+template<class T>
+class array_view {
+public:
+    T *begin, *end;
+    array_view(T *begin, T *end) : begin(begin), end(end) {}
+    array_view(T *begin, int size) : begin(begin), end(begin + size) {}
+    array_view(const std::vector<T> &v) : begin(v.data()), end(v.data() + v.size()) {}
+};
 
 template <class T> 
 std::ostream &operator << (std::ostream &s, const std::vector<T> &a) {
 	s << "[";
 
-    for (int i = 0; i < a.size() - 1; ++i)
+    for (const auto& x: a)
     {
-        s << a[i] << ", ";
-    }
-
-    if (a.size() > 0)
-    {
-        s << a[a.size() - 1];
+        s << x << " ";
     }
 
 	return s << "]";
 }
 
-std::ostream &operator << (std::ostream &s, const TensorWrapper& a) {
-    s << "Tensor(" << a.shape() << ") : ";
-    int prod = 1;
-    for (const auto& x: a.shape())
+template <class T> 
+std::ostream &operator << (std::ostream &s, const array_view<T>& a) {
+	for (T* it = a.begin; it != a.end; ++it)
     {
-        prod *= x;
+        s << *it;
+
+        if (it != a.end - 1)
+        {
+            s << ", ";
+        }
     }
-
-    const int64_t* ref = a.data();
-
-    for (int i = 0; i < prod; ++i)
-    {
-        s << ref[i] << " ";
-    }
-
+    
     return s;
 }
 
+void printmat3d(long long* mat, int h, int w, int c);
+std::ostream &operator << (std::ostream &s, const cudaError_t &a);
+std::ostream &operator << (std::ostream &s, const FixedLongLong::FixedLongLongType &a);
+bool cuda_fmt_error(const cudaError_t &a);
 
 #endif // __UTILITIES_H__

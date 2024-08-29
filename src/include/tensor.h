@@ -1,10 +1,14 @@
 #ifndef __TENSOR_H__
 #define __TENSOR_H__
+
 #include <vector>
 #include <stdint.h>
 #include <cstring>
 #include <assert.h>
 #include <memory>
+#include <numeric>
+#include <iostream>
+#include <helpers.cuh>
 
 class  TensorWrapper {
     std::vector<uint64_t> mshape;
@@ -46,6 +50,11 @@ public:
         return mshape;
     }
 
+    uint64_t size() const
+    {
+        return std::accumulate(mshape.begin(), mshape.end(), 1, std::multiplies<uint64_t>());
+    }
+
     int64_t* data() const {
         return mdata;
     }
@@ -69,5 +78,22 @@ public:
     }
 };
 
+std::ostream &operator << (std::ostream &s, const TensorWrapper& a) {
+    s << "Tensor[" << a.shape() << "]: ";
+    int prod = 1;
+    for (const auto& x: a.shape())
+    {
+        prod *= x;
+    }
+
+    const int64_t* ref = a.data();
+
+    for (int i = 0; i < prod; ++i)
+    {
+        s << ref[i] << " ";
+    }
+
+    return s;
+}
 
 #endif

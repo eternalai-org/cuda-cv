@@ -1,11 +1,6 @@
-#include <stdio.h>
-#include <cuda.h>
-#include <iostream>
-#include <assert.h>
-
-#include <fixedlonglong32x32.cuh>
-#include <kernels.cuh>
 #include <operations.cuh>
+
+
 
 void __layerNormalizeFixedLongLong(
     long long *X, // input of shape (m, n, c) 

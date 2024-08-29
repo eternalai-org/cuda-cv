@@ -1,11 +1,4 @@
-#include <stdio.h>
-#include <cuda.h>
-#include <iostream>
-#include <assert.h>
-#include <fixedlonglong32x32.cuh>
-#include <kernels.cuh>
 #include <operations.cuh>
-
 
 void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, uint8_t* error) {
 

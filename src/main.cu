@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <operations.cuh>
-#include <helpers.cuh>
+
 #include <vector>
 
 using namespace std;
