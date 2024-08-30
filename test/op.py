@@ -67,10 +67,10 @@ def encode(op: int, params: list, tensors: list[Tensor]) -> bytes:
     
     shapes = [e.shape for e in tensors]
     data = [e.compress() for e in tensors]
-    return abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'uint256[][]'), (int(op), params, shapes, data))
+    return abi_encode(('uint64', 'uint64[]', 'uint64[][]', 'int256[][]'), (int(op), params, shapes, data))
 
 def decode(b: bytes) -> Tensor:
-    (data, shape) = abi_decode(('uint256[]', 'uint64[]'), b)
+    (data, shape) = abi_decode(('int256[]', 'uint64[]'), b)
     return Tensor.uncompress(data, shape)
 
 def execute(op: int, params, tensor: Tensor) -> Tensor:

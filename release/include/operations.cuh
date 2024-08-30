@@ -1,6 +1,10 @@
-#pragma once
+#ifndef __OPERATIONS_H__
+#define __OPERATIONS_H__
 
 #include <stdint.h>
+#include <helpers.cuh>
+#include <fixedlonglong32x32.cuh>
+#include <kernels.cuh>
 
 // matrix mutiplications
 void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k, uint8_t* error);
@@ -64,7 +68,17 @@ void __softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c, u
 
 // normalizations
 void __layerNormalizeFixedLongLong(long long *X, long long *Y, long long *ma, long long *mv, long long *gamma, long long *beta, long long epsilon, int h, int w, int c, uint8_t* error);
-void __batchNormalizeFixedLongLong(long long *X, long long *Y, long long *ma, long long *mv, long long *gamma, long long *beta, long long epsilon, int h, int w, int c, uint8_t* error);
+void __batchNormalizeFixedLongLong(
+    long long *X, 
+    long long *Y, 
+    long long *gamma, 
+    long long *beta, 
+    long long *ma, 
+    long long *mv, 
+    long long epsilon, 
+    int h, int w, int c, 
+    uint8_t* error
+);
 
 #if __cplusplus
 extern "C" {
@@ -138,4 +152,6 @@ uint8_t maxmulDouble(double *A, double *B, double *C, int m, int n, int k);
 
 #if __cplusplus
 }
+#endif
+
 #endif

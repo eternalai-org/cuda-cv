@@ -4,7 +4,7 @@ header_files = include/fixedlonglong32x32.cuh include/functional.h
 optimization = -O2
 compile_flags = -Xcompiler="-fpermissive"
 CPP_VERSION = -std=c++17
-CPP_SYMBOLS = # -DLOGGING_DEBUG -DLOGGING_VERBOSE
+CPP_SYMBOLS = -DLOGGING_DEBUG -DLOGGING_VERBOSE
 
 kernels.o: algo/kernels.cu
 	nvcc --compiler-options -fPIC -c -o kernels.o  algo/kernels.cu \

@@ -20,10 +20,10 @@ void __layerNormalizeFixedLongLong(
 void __batchNormalizeFixedLongLong(
     long long *X, // input of shape (m, n, c) 
     long long *Y, // output of shape (m, n, c)
-    long long *ma, // moving average (c)
-    long long *mv, // mong variance  (c)
     long long *gamma, // scale (c)
     long long *beta, // offset (c)
+    long long *ma, // moving average (c)
+    long long *mv, // mong variance  (c)
     long long epsilon, // epsilon 
     int h, int w, int c  // m, n, c 
     , uint8_t* error

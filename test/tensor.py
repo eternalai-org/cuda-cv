@@ -45,7 +45,7 @@ class Tensor(object):
             shapes = [random.randint(1, 10) for _ in range(4)]
 
         flatten = np.prod(shapes)
-        tensor = np.random.rand(flatten).astype(np.float64)
+        tensor = np.random.rand(flatten).astype(np.float64) - 0.5
         return Tensor(tensor, shapes)
     
     @staticmethod
@@ -56,5 +56,5 @@ class Tensor(object):
             shapes = [random.randint(1, 10) for _ in range(4)]
 
         flatten = np.prod(shapes)
-        tensor = np.zeros(flatten).astype(np.float64) - 0.5
+        tensor = np.zeros(flatten).astype(np.float64)
         return Tensor(tensor, shapes)
