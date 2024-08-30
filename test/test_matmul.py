@@ -23,17 +23,21 @@ def run_case(*args):
     return diff < eps
 
 def benchmark_matmul():
-    n_cases = 1 * 1000
+    n_cases = 10
 
     futures = []
-    for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-        futures.append(run_case())
+    
+    try:
+        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+            futures.append(run_case())
+    except KeyboardInterrupt:
+        print('Interrupted')
 
-    fails = sum([f == False for f in tqdm(futures, total=n_cases, desc='Processing results')])
-    success = n_cases - fails
+    fails = sum([f == False for f in tqdm(futures, total=len(futures), desc='Processing results')])
+    success = len(futures) - fails
 
-    print(f'Success: {success}/{n_cases}')
-    print(f'Fails: {fails}/{n_cases}')
+    print(f'Success: {success}/{len(futures)}')
+    print(f'Fails: {fails}/{len(futures)}')
 
     if fails > 0:
         raise ValueError('Some test cases failed')

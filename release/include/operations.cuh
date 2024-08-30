@@ -6,6 +6,9 @@
 #include <fixedlonglong32x32.cuh>
 #include <kernels.cuh>
 
+void channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error);
+long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error);
+
 // matrix mutiplications
 void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k, uint8_t* error);
 void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, uint8_t* error);
@@ -33,8 +36,7 @@ void __conv2dFixedLongLong(long long* inp, long long* kernel, long long* bias, l
 
 // pooling operations
 void __avgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding, uint8_t* error);
-void __maxPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding, uint8_t* error
-);
+void __maxPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding, uint8_t* error);
 void __globalAvgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, uint8_t* error);
 
 

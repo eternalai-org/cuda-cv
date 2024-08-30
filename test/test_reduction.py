@@ -47,22 +47,26 @@ def run_case(*args):
     ])
 
 def benchmark_element_wise():
-    n_cases = 1
+    n_cases = 1000
 
     futures = []
-    for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-        futures.append(run_case())
+    
+    try:
+        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+            futures.append(run_case())
+    except KeyboardInterrupt:
+        print('Interrupted')
 
     fails = sum([not f for f in futures])
-    success = n_cases - fails
+    success = len(futures) - fails
 
-    print(f'Success: {success}/{n_cases}')
-    print(f'Fails: {fails}/{n_cases}')
+    print(f'Success: {success}/{len(futures)}')
+    print(f'Fails: {fails}/{len(futures)}')
 
     if fails > 0:
         raise ValueError('Some test cases failed')
 
 if __name__ == '__main__':
     # os.environ['BENCHMARK_LOGGING_SILENT'] = '1'
-    # benchmark_element_wise()
-    manual_test()
+    benchmark_element_wise()
+    # manual_test()

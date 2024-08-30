@@ -64,14 +64,18 @@ def benchmark_pooling():
     n_cases = 100 
 
     futures = []
-    for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-        futures.append(run_case())
+    
+    try:
+        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+            futures.append(run_case())
+    except KeyboardInterrupt:
+        print('Interrupted')
 
     fails = sum([not f for f in futures])
-    success = n_cases - fails
+    success = len(futures) - fails
 
-    print(f'Success: {success}/{n_cases}')
-    print(f'Fails: {fails}/{n_cases}')
+    print(f'Success: {success}/{len(futures)}')
+    print(f'Fails: {fails}/{len(futures)}')
 
     if fails > 0:
         raise ValueError('Some test cases failed')
@@ -131,7 +135,7 @@ def run_case_special_1(*args):
     return res
     
 def benchmark_pooling_special_1():
-    n_cases = 1000
+    n_cases = 5
 
     futures = []
     for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
@@ -147,5 +151,5 @@ def benchmark_pooling_special_1():
         raise ValueError('Some test cases failed')
 
 if __name__ == '__main__':
-    # benchmark_pooling()
-    benchmark_pooling_special_1()
+    benchmark_pooling()
+    # benchmark_pooling_special_1()

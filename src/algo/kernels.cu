@@ -75,7 +75,6 @@ __global__ void tanhImplFixedLongLong(long long *A, long long* B, int n)
     {
         long long expAi = FixedLongLong::exp(A[i]);
         long long expNegAi = FixedLongLong::exp(-A[i]);
-
         B[i] = FixedLongLong::div(expAi - expNegAi, expAi + expNegAi);
     }
 }
@@ -439,6 +438,14 @@ __global__ void mat_sqrt_fixed_longlong(long long *A, long long *B, int n) {
 
     if(x < n && A[x] >= 0) {
         B[x] = FixedLongLong::sqrt(A[x]);
+    }
+}
+
+__global__ void mat_exp_fixed_longlong(long long *A, long long *B, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if (x < n) {
+        B[x] = FixedLongLong::exp(A[x]);
     }
 }
 

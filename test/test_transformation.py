@@ -24,18 +24,21 @@ def run_case(*args):
     ])
 
 def benchmark_element_wise():
-    n_cases = 1 * 1000
+    n_cases = 1000
 
     futures = []
-    with ProcessPoolExecutor(max_workers=4) as executor:
+    
+    try:
         for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-            futures.append(executor.submit(run_case))
+            futures.append(run_case())
+    except KeyboardInterrupt:
+        print('Interrupted')
 
-    fails = sum([not f.result() for f in futures])
-    success = n_cases - fails
+    fails = sum([not f for f in futures])
+    success = len(futures) - fails
 
-    print(f'Success: {success}/{n_cases}')
-    print(f'Fails: {fails}/{n_cases}')
+    print(f'Success: {success}/{len(futures)}')
+    print(f'Fails: {fails}/{len(futures)}')
 
     if fails > 0:
         raise ValueError('Some test cases failed')

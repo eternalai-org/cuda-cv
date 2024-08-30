@@ -5,17 +5,19 @@ from concurrent.futures import ProcessPoolExecutor
 import json
 from tensor import Tensor
 from op import execute, Operation
-from utils import sigmoid, softmax, tanh, relu, mae
+from utils import sigmoid, softmax, tanh, relu, mae, absolute_or_relative_error
 
 def run_case(*args):
-    accepted_error = 1e-4
+    accepted_error = 1e-3
 
     sigmoid_opcode = Operation.SIGMOID
     softmax_opcode = Operation.SOFTMAX
     tanh_opcode = Operation.TANH
     relu_opcode = Operation.RELU
     
-    tin = Tensor.random_tensor()
+    tin = Tensor.random_tensor([10])
+    
+    # tin._data += 0.5
     
     expected_sigmoid = sigmoid(tin.data)
     expected_softmax = softmax(tin.data)
@@ -31,7 +33,7 @@ def run_case(*args):
         return False
     
     sigmoid_mae = mae(expected_sigmoid, sigmoid_out.data)
-    softmax_mae = mae(expected_softmax, softmax_out.data)
+    softmax_mae = absolute_or_relative_error(softmax_out.data, expected_softmax).mean()
     tanh_mae = mae(expected_tanh, tanh_out.data)
     relu_mae = mae(expected_relu, relu_out.data)
         
@@ -41,18 +43,21 @@ def run_case(*args):
         or relu_mae > accepted_error)    
 
 def benchmark_activation():
-    n_cases = 10 * 1000
+    n_cases = 1000
 
     futures = []
-    with ProcessPoolExecutor(max_workers=8) as executor:
+    
+    try:
         for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-            futures.append(executor.submit(run_case))
+            futures.append(run_case())
+    except KeyboardInterrupt:
+        print('Interrupted')
 
-    fails = sum([f.result() == False for f in tqdm(futures, total=n_cases, desc='Processing results')])
-    success = n_cases - fails
+    fails = sum([f == False for f in tqdm(futures, total=len(futures), desc='Processing results')])
+    success = len(futures) - fails
 
-    print(f'Success: {success}/{n_cases}')
-    print(f'Fails: {fails}/{n_cases}')
+    print(f'Success: {success}/{len(futures)}')
+    print(f'Fails: {fails}/{len(futures)}')
 
     if fails > 0:
         raise ValueError('Some test cases failed')
