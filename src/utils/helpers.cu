@@ -28,10 +28,10 @@ bool cuda_fmt_error(const cudaError_t &a)
         std::cerr << "CUDA Error: " << a << std::endl;
 #endif
 
-        return false;
+        return 1;
     }
 
-    return true;
+    return 0;
 }
 
 std::ostream &operator << (std::ostream &s, const cudaError_t &a)

@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include <tensor.h>
+#include <helpers.cuh>
+#include <operations.cuh>
+
 
 
 struct operation_pack
