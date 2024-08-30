@@ -102,6 +102,9 @@ test_reduction: libcomputelib.so
 benchmark: libcomputelib.so
 	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/benchmark.py
 
+test_all:  test_pooling test_conv2d test_norm test_reduction
+	echo "All tests passed"
+
 release: libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi
 	mkdir build

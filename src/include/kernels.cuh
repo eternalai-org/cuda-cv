@@ -65,6 +65,7 @@ __global__ void mat_sub_fixed_longlong(long long *A, long long *B, long long *C,
 __global__ void mat_mul_fixed_longlong(long long *A, long long *B, long long *C, int n);
 __global__ void mat_div_fixed_longlong(long long *A, long long *B, long long *C, int n);
 __global__ void mat_sqrt_fixed_longlong(long long *A, long long *B, int n);
+__global__ void mat_exp_fixed_longlong(long long *A, long long *B, int n);
 __global__ void conv2dImplFixedLongLong_kernel(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int kernel_size, int in_channel, int out_channel, // kernel properties
