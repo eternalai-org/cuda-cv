@@ -68,7 +68,17 @@ void __softmax2DFixedLongLong(long long* A, long long* B, int h, int w, int c, u
 
 // normalizations
 void __layerNormalizeFixedLongLong(long long *X, long long *Y, long long *ma, long long *mv, long long *gamma, long long *beta, long long epsilon, int h, int w, int c, uint8_t* error);
-void __batchNormalizeFixedLongLong(long long *X, long long *Y, long long *ma, long long *mv, long long *gamma, long long *beta, long long epsilon, int h, int w, int c, uint8_t* error);
+void __batchNormalizeFixedLongLong(
+    long long *X, 
+    long long *Y, 
+    long long *gamma, 
+    long long *beta, 
+    long long *ma, 
+    long long *mv, 
+    long long epsilon, 
+    int h, int w, int c, 
+    uint8_t* error
+);
 
 #if __cplusplus
 extern "C" {

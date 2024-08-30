@@ -475,10 +475,10 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
     }
 
     const std::vector<uint64_t>& inp = pack.tensors[0].shape(),
-                                 ma = pack.tensors[1].shape(),
-                                 mv = pack.tensors[2].shape(),
-                                 gama = pack.tensors[3].shape(),
-                                 beta = pack.tensors[4].shape();
+                                 gama = pack.tensors[1].shape(),
+                                 beta = pack.tensors[2].shape(),
+                                 ma = pack.tensors[3].shape(),
+                                 mv = pack.tensors[4].shape();
 
     const std::vector<int64_t>& params = pack.params;
 
@@ -504,10 +504,10 @@ uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
     __batchNormalizeFixedLongLong(
         (long long*)pack.tensors[0].data(), // inp
         (long long*)out, 
-        (long long*)pack.tensors[1].data(), // ma
-        (long long*)pack.tensors[2].data(), // mv
-        (long long*)pack.tensors[3].data(), // gama
-        (long long*)pack.tensors[4].data(), // beta 
+        (long long*)pack.tensors[1].data(), // gama
+        (long long*)pack.tensors[2].data(), // beta 
+        (long long*)pack.tensors[3].data(), // ma
+        (long long*)pack.tensors[4].data(), // mv
         params[0], // epsilon
         h_in, 1, c_in, 
         _error

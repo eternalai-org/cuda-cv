@@ -12,7 +12,7 @@ def run_case(*args):
     h1, w1, w2 = random.randint(1, 1000), random.randint(1, 1000), random.randint(1, 1000)
     t1 = Tensor.random_tensor([h1, w1])
     t2 = Tensor.random_tensor([w1, w2])
-    
+
     t1_data = t1.data.reshape(t1.shape)
     t2_data = t2.data.reshape(t2.shape)
     np_result = np.matmul(t1_data, t2_data)
@@ -26,9 +26,8 @@ def benchmark_matmul():
     n_cases = 1 * 1000
 
     futures = []
-    with ProcessPoolExecutor(max_workers=4) as executor:
-        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-            futures.append(executor.submit(run_case))
+    for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
+        futures.append(run_case())
 
     fails = sum([f == False for f in tqdm(futures, total=n_cases, desc='Processing results')])
     success = n_cases - fails
