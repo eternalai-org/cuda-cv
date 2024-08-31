@@ -47,5 +47,5 @@ def absolute_or_relative_error(a, b): # absolute or relative error
     return np.abs(a - b) / np.maximum(1.0, b)
 
 def log(*msg):
-    if 'BENCHMARK_LOGGING_SILENT' not in os.environ:
+    if 'benchmark' not in os.environ:
         print(*msg)

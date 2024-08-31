@@ -59,5 +59,5 @@ def benchmark_normaization():
         raise ValueError('Some test cases failed')
 
 if __name__ == '__main__':
-    # os.environ['BENCHMARK_LOGGING_SILENT'] = '1'
+    # os.environ['benchmark'] = '1'
     benchmark_normaization()

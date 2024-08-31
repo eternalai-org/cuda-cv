@@ -1,70 +1,75 @@
-cu_header = # -I/usr/local/cuda/include
-header = -Iinclude
-header_files = include/fixedlonglong32x32.cuh include/functional.h
-optimization = -O2
-compile_flags = -Xcompiler="-fpermissive"
+cu_headers = # -I/usr/local/cuda/include
+HEADERS = -Iinclude $(cu_headers)
+OPTIMIZATION = -O2
+COMPILE_FLAGS = -Xcompiler="-fpermissive"
 CPP_VERSION = -std=c++17
-CPP_SYMBOLS = -DLOGGING_DEBUG -DLOGGING_VERBOSE
+_CPP_SYMBOLS = -DLOGGING_DEBUG -DLOGGING_VERBOSE
+
+ifeq ($(debug), 1)
+	CPP_SYMBOLS=-DLOGGING_DEBUG -DLOGGING_VERBOSE
+	
+else
+	CPP_SYMBOLS=
+endif 
 
 kernels.o: algo/kernels.cu
 	nvcc --compiler-options -fPIC -c -o kernels.o  algo/kernels.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 matrixmul.o: algo/matrixmul.cu
 	nvcc --compiler-options -fPIC -c -o matrixmul.o  algo/matrixmul.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 element_wise_operator.o:  algo/element_wise_operator.cu
 	nvcc --compiler-options -fPIC -c -o element_wise_operator.o  algo/element_wise_operator.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 normalization.o:  algo/normalization.cu
 	nvcc --compiler-options -fPIC -c -o normalization.o  algo/normalization.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 conv.o:  algo/conv.cu
 	nvcc --compiler-options -fPIC -c -o conv.o  algo/conv.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 pooling.o:  algo/pooling.cu
 	nvcc --compiler-options -fPIC -c -o pooling.o  algo/pooling.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 activations.o:  algo/activations.cu
 	nvcc --compiler-options -fPIC -c -o activations.o  algo/activations.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 merging.o:  algo/merging.cu
 	nvcc --compiler-options -fPIC -c -o merging.o  algo/merging.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 reduction.o:  algo/reduction.cu
 	nvcc --compiler-options -fPIC -c -o reduction.o  algo/reduction.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 wrapper.o: deprecated/algo/wrapper.cu
 	nvcc --compiler-options -fPIC -c -o wrapper.o deprecated/algo/wrapper.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 computelib.o: computelib.cu
 	nvcc --compiler-options -fPIC -c -o computelib.o computelib.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 helpers.o: utils/helpers.cu
 	nvcc --compiler-options -fPIC -c -o helpers.o utils/helpers.cu \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o \
 	activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o
 	nvcc --ptxas-options=-v -o libcomputelib.so --shared matrixmul.o element_wise_operator.o normalization.o \
 	conv.o pooling.o activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o \
-	$(cu_header) $(header) $(optimization) $(compile_flags) $(CPP_VERSION) $(CPP_SYMBOLS)
-
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 
 main: main.cu libcomputelib.so helpers.o
 	nvcc -o main main.cu helpers.o -L. -lcomputelib 
-	$(cu_header) $(header) $(optimization) $(CPP_SYMBOLS)
+	$(HEADERS) $(OPTIMIZATION) $(CPP_SYMBOLS)
 
 exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main
@@ -99,19 +104,29 @@ test_norm: libcomputelib.so
 test_reduction: libcomputelib.so
 	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_reduction.py
 
-benchmark: libcomputelib.so
+benchmark: clean libcomputelib.so
 	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/benchmark.py
 
-test_all:  test_pooling test_conv2d test_norm test_reduction
+test_all: clean test_pooling test_conv2d test_norm test_reduction \
+	test_merging test_transformation test_matmul test_elementwise \
+	test_act test_abi
+
 	echo "All tests passed"
 
-release: libcomputelib.so
+release: clean libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi
 	mkdir build
 	mkdir build/include
 	mv libcomputelib.so build
 	cp include/operations.cuh build/include
 	cp include/computelib.h build/include
+
+git_release: release
+	rm -rf ../release
+	mv build ../release
+	git add ../release
+	git commit -m "[automatic] Release $(shell date)"
+	git push
 
 clean:
 	rm -f *.o *.so

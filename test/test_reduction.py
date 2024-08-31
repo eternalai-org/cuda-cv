@@ -29,25 +29,33 @@ def run_case(*args):
     sum_out = execute(Operation.REDUCTION_SUM, [], t1)
     
     
-    diff_mean = absolute_or_relative_error(mean_out.data, expected_mean_t1)
-    diff_max = absolute_or_relative_error(max_out.data, expected_max_t1)
-    diff_min = absolute_or_relative_error(min_out.data, expected_min_t1)
-    diff_sum = absolute_or_relative_error(sum_out.data, expected_sum_t1)
+    diff_mean = absolute_or_relative_error(mean_out.data, expected_mean_t1).mean()
+    diff_max = absolute_or_relative_error(max_out.data, expected_max_t1).mean()
+    diff_min = absolute_or_relative_error(min_out.data, expected_min_t1).mean()
+    diff_sum = absolute_or_relative_error(sum_out.data, expected_sum_t1).mean()
     
-    print('mean', mean_out.data, expected_mean_t1)
-    print('max', max_out.data, expected_max_t1)
-    print('min', min_out.data, expected_min_t1)
-    print('sum', sum_out.data, expected_sum_t1)
+    # print('mean', mean_out.data, expected_mean_t1, diff_mean)
+    # print('max', max_out.data, expected_max_t1, diff_max)
+    # print('min', min_out.data, expected_min_t1, diff_min)
+    # print('sum', sum_out.data, expected_sum_t1, diff_sum)
     
-    return all([
+    res = all([
         diff_mean < accepted_error,
         diff_max < accepted_error,
         diff_min < accepted_error,
         diff_sum < accepted_error
     ])
+    
+    if not res:
+        print('mean', diff_mean)
+        print('max', diff_max)
+        print('min', diff_min)
+        print('sum', diff_sum)
+        
+    return res
 
 def benchmark_element_wise():
-    n_cases = 1000
+    n_cases = 10000
 
     futures = []
     
@@ -67,6 +75,6 @@ def benchmark_element_wise():
         raise ValueError('Some test cases failed')
 
 if __name__ == '__main__':
-    # os.environ['BENCHMARK_LOGGING_SILENT'] = '1'
+    # os.environ['benchmark'] = '1'
     benchmark_element_wise()
     # manual_test()

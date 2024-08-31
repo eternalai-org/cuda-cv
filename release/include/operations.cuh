@@ -6,8 +6,13 @@
 #include <fixedlonglong32x32.cuh>
 #include <kernels.cuh>
 
-void channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error);
-long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error);
+// recursive implementation of reductions
+void __channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error);
+long long __sumReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __maxReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __minReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __meanReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __stdReduction_impl(long long* d_gpu, int n, uint8_t* error);
 
 // matrix mutiplications
 void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k, uint8_t* error);
@@ -42,7 +47,6 @@ void __globalAvgPoolingFixedLongLong(long long* inp, long long* out, int h, int 
 
 // reduction
 long long __sumReduction(long long* inp, int n, uint8_t* error);
-long long __avgReduction(long long* inp, int n, uint8_t* error);
 long long __maxReduction(long long* inp, int n, uint8_t* error);
 long long __minReduction(long long* inp, int n, uint8_t* error);
 long long __meanReduction(long long* inp, int n, uint8_t* error);
@@ -112,7 +116,6 @@ uint8_t estimatePoolingOutputSize(int h, int w, int in_channel, int pool_size, i
 uint8_t globalAvgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel);
 
 uint8_t sumReduction(long long* inp, int n, long long* res);
-uint8_t avgReduction(long long* inp, int n, long long* res);
 uint8_t maxReduction(long long* inp, int n, long long* res);
 uint8_t minReduction(long long* inp, int n, long long* res);
 uint8_t meanReduction(long long* inp, int n, long long* res);

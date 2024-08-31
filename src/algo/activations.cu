@@ -16,7 +16,7 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
     }
 
     mat_exp_fixed_longlong<<<BLOCKS, BLOCK_SIZE>>>(gpu, gpu + m, m);
-    long long sumExp = sumReduction_impl(gpu + m, m, error);
+    long long sumExp = __sumReduction_impl(gpu + m, m, error);
 
     if (!*error && sumExp != 0) {
         softmaxImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu + m, gpu, m, sumExp);

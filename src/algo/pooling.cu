@@ -9,7 +9,7 @@ void globalAvgPoolingFixedLongLong_impl(
     , uint8_t* error
 )
 {
-    const int block_sz = 512;
+    const int block_sz = 256;
     const int block_sz2 = block_sz * 2;
     const int grid_sz_x = (h * w + block_sz2 - 1) / block_sz2;
 

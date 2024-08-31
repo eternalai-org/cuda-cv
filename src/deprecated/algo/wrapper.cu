@@ -73,13 +73,6 @@ uint8_t sumReduction(long long* inp, int n, long long* res)
     return isOk;
 }
 
-uint8_t avgReduction(long long* inp, int n, long long* res)
-{
-    uint8_t isOk = true;
-    *res = __avgReduction(inp, n, &isOk);
-    return isOk;
-}
-
 uint8_t maxReduction(long long* inp, int n, long long* res)
 {
     uint8_t isOk = true;

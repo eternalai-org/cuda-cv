@@ -452,16 +452,64 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
 uint8_t* transform_exp_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("transform_exp_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in transform_exp_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    
+    int64_t* out = new int64_t[n];
+    __matExpLongLong((long long*)pack.tensors[0].data(), (long long*)out, n, 1, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in transform_exp_call: error in __matExpLongLong");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* transform_sqrt_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("transform_sqrt_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+   if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in transform_sqrt: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    
+    int64_t* out = new int64_t[n];
+    __matSqrtLongLong((long long*)pack.tensors[0].data(), (long long*)out, n, 1, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in transform_sqrt: error in __matSqrtLongLong");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
@@ -538,16 +586,71 @@ uint8_t* layer_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
 uint8_t* zscore_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("zscore_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in zscore_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+
+    long long eps = 0;
+
+    if (pack.params.size() > 0)
+    {
+        eps = pack.params[0];
+    }
+    
+    int64_t* out = new int64_t[n];
+    __zScore((long long*)pack.tensors[0].data(), (long long*)out, eps, n, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in zscore_call: error in zScore");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* min_max_scale_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("min_max_scale_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in min_max_scale_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    
+    int64_t* out = new int64_t[n];
+    __maxMinScale((long long*)pack.tensors[0].data(), (long long*)out, n, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in min_max_scale_call: error in zScore");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)

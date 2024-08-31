@@ -1,9 +1,17 @@
 #include <operations.cuh>
 
-long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
+
+// implementations - no mempory allocation or deallocation for the input
+long long __sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
 {
+    if (!n)
+    {
+        *error = 1;
+        return 0;
+    }
+
     long long res = 0;
-    int block_sz = 512;
+    int block_sz = 256;
     int block_sz2 = block_sz * 2;
     int grid_sz = (n + block_sz2 - 1) / block_sz2;
 
@@ -26,7 +34,7 @@ long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
 
     if (grid_sz > 1)
     {
-        res = sumReduction_impl(blockSum, grid_sz, error);
+        res = __sumReduction_impl(blockSum, grid_sz, error);
     }
     else
     {
@@ -43,10 +51,16 @@ long long sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
 
 
 
-long long maxReduction_impl(long long* d_gpu, int n, uint8_t* error)
+long long __maxReduction_impl(long long* d_gpu, int n, uint8_t* error)
 {
+    if (!n)
+    {
+        *error = 1;
+        return 0;
+    }
+
     long long res = 0;
-    int block_sz = 1024;
+    int block_sz = 256;
     int block_sz2 = block_sz * 2;
     int grid_sz = (n + block_sz2 - 1) / block_sz2;
 
@@ -58,7 +72,7 @@ long long maxReduction_impl(long long* d_gpu, int n, uint8_t* error)
         return 0;
     }
 
-    if (*error = cuda_fmt_error(cudaMemset(blockMax, 0, grid_sz * sizeof(long long))))
+    if (*error = cuda_fmt_error(cudaMemset(blockMax, 0xFF, grid_sz * sizeof(long long))))
     {
         cudaFree(blockMax);
         return 0;
@@ -68,7 +82,7 @@ long long maxReduction_impl(long long* d_gpu, int n, uint8_t* error)
 
     if (grid_sz > 1)
     {
-        res = maxReduction_impl(blockMax, grid_sz, error);
+        res = __maxReduction_impl(blockMax, grid_sz, error);
     }
     else
     {
@@ -85,10 +99,16 @@ long long maxReduction_impl(long long* d_gpu, int n, uint8_t* error)
 
 
 
-long long minReduction_impl(long long* d_gpu, int n, uint8_t* error)
+long long __minReduction_impl(long long* d_gpu, int n, uint8_t* error)
 {
+    if (!n)
+    {
+        *error = 1;
+        return 0;
+    }
+
     long long res = 0;
-    int block_sz = 512;
+    int block_sz = 256;
     int block_sz2 = block_sz * 2;
     int grid_sz = (n + block_sz2 - 1) / block_sz2;
 
@@ -110,7 +130,7 @@ long long minReduction_impl(long long* d_gpu, int n, uint8_t* error)
 
     if (grid_sz > 1)
     {
-        res = minReduction_impl(blockMin, grid_sz, error);
+        res = __minReduction_impl(blockMin, grid_sz, error);
     }
     else
     {
@@ -125,15 +145,20 @@ long long minReduction_impl(long long* d_gpu, int n, uint8_t* error)
     return res;
 }
 
-void channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error)
+void __channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error)
 {
+    if (!(n * c))
+    {
+        *error = 1;
+        return;
+    }
+
     long long* blockSum;
 
-    const int block_size = 512;
+    const int block_size = 256;
     const int block_size_2 = block_size * 2;
     const int blocks = (n + block_size_2 - 1) / block_size_2;
 
-    ;
     if (*error = cuda_fmt_error(cudaMalloc(&blockSum, blocks * c * sizeof(long long))))
     {
         cudaFree(blockSum);
@@ -147,7 +172,7 @@ void channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int
 
     if (blocks > 1)
     {
-        channelWiseSumReduction_impl(blockSum, d_out, blocks, c, error);
+        __channelWiseSumReduction_impl(blockSum, d_out, blocks, c, error);
     }
     else
     {
@@ -160,6 +185,54 @@ void channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int
 
     cudaFree(blockSum);
 }
+
+long long __meanReduction_impl(long long* gpu_inp, int n, uint8_t* error)
+{
+    if (!n)
+    {
+        *error = 1;
+        return 0;
+    }
+
+    return FixedLongLong::div(__sumReduction_impl(gpu_inp, n, error), (1LL * n) << 32);
+}
+
+long long __stdReduction_impl(long long* d_gpu, int n, uint8_t* error)
+{
+    if (!n)
+    {
+        *error = 1;
+        return 0;
+    }
+
+    long long mean = __meanReduction_impl(d_gpu, n, error);
+    
+    if (*error)
+    {
+        return 0;
+    }
+
+    long long* sub = nullptr;
+    
+    if (*error = cuda_fmt_error(cudaMalloc(&sub, 2 * n * sizeof(long long))))
+    {
+        cudaFree(sub);
+        return 0;
+    }
+
+    const int BLOCK_SIZE = 256;
+
+    mat_sub_single_fixed_longlong<<<(n + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(d_gpu, sub, mean, n);
+    mat_pow2_single_fixed_longlong<<<(n + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(sub, sub + n, n);
+    long long res = FixedLongLong::sqrt(FixedLongLong::div(__sumReduction_impl(sub + n, n, error), (1LL * n) << 32));
+
+    cudaFree(sub);
+    return res;
+}
+
+
+////////////////////// wrappers //////////////////////
+
 
 long long __sumReduction(long long* inp, int n, uint8_t* error)
 {
@@ -175,15 +248,11 @@ long long __sumReduction(long long* inp, int n, uint8_t* error)
         cudaFree(gpu);
         return 0;
     }
-    long long res = sumReduction_impl(gpu, n, error);
+    long long res = __sumReduction_impl(gpu, n, error);
     cudaFree(gpu);
     return res;
 }
 
-long long __avgReduction(long long* inp, int n, uint8_t* error)
-{
-    return FixedLongLong::div(__sumReduction(inp, n, error), (1ll * n) << 32);
-}
 
 long long __maxReduction(long long* inp, int n, uint8_t* error)
 {
@@ -200,7 +269,8 @@ long long __maxReduction(long long* inp, int n, uint8_t* error)
         cudaFree(gpu);
         return 0;
     }
-    long long res = maxReduction_impl(gpu, n, error);
+
+    long long res = __maxReduction_impl(gpu, n, error);
     cudaFree(gpu);
     return res;
 }
@@ -220,33 +290,98 @@ long long __minReduction(long long* inp, int n, uint8_t* error)
         cudaFree(gpu);
         return 0;
     }
-    long long res = minReduction_impl(gpu, n, error);
+
+    long long res = __minReduction_impl(gpu, n, error);
     cudaFree(gpu);
     return res;
 }
 
 long long __meanReduction(long long* inp, int n, uint8_t* error)
 {
-    return FixedLongLong::div(__sumReduction(inp, n, error), (1LL * n) << 32);
+    return FixedLongLong::div(__sumReduction(inp, n, error), (1ll * n) << 32);
 }
 
 long long __stdReduction(long long* inp, int n, uint8_t* error)
 {
-    long long mean = __meanReduction(inp, n, error);
-    return 0;
+    long long* d_gpu = nullptr;
+    if (*error = cuda_fmt_error(cudaMalloc(&d_gpu, n * sizeof(long long))))
+    {
+        cudaFree(d_gpu);
+        return 0;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, inp, n * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(d_gpu);
+        return 0;
+    }
+
+    long long mean = __stdReduction_impl(d_gpu, n, error);
+    cudaFree(d_gpu);
+
+    return mean;
 }
 
 void __maxMinScale(long long* inp, long long* out, int n, uint8_t* error)
 {
-    long long min = __minReduction(inp, n, error);
-    long long max = __maxReduction(inp, n, error);
+    long long* d_gpu = nullptr;
 
+    if (*error = cuda_fmt_error(cudaMalloc(&d_gpu, 2 * n * sizeof(long long))))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, inp, n * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
+
+    long long min = __minReduction_impl(d_gpu, n, error);
+    long long max = __maxReduction_impl(d_gpu, n, error);
+
+    if (*error)
+    {
+        cudaFree(d_gpu);
+        return;
+    }
+
+    const int BLOCK_SIZE = 256;
+    minMaxScale_kernel<<<(n + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(d_gpu, d_gpu + n, min, max, n);
+    *error = cuda_fmt_error(cudaMemcpy(out, d_gpu + n, n * sizeof(long long), cudaMemcpyDeviceToHost));
+    cudaFree(d_gpu);
 }
 
 void __zScore(long long* inp, long long* out, long long eps, int n, uint8_t* error)
 {
-    long long mean = __meanReduction(inp, n, error); 
-    long long std = __stdReduction(inp, n, error);
+    long long* d_gpu = nullptr;
+
+    if (*error = cuda_fmt_error(cudaMalloc(&d_gpu, 2 * n * sizeof(long long))))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu, inp, n * sizeof(long long), cudaMemcpyHostToDevice)))
+    {
+        cudaFree(d_gpu);
+        return;
+    }
+
+    long long mean = __meanReduction_impl(d_gpu, n, error);
+    long long std = __stdReduction_impl(d_gpu, n, error);
+
+    if (*error)
+    {
+        cudaFree(d_gpu);
+        return;
+    }
+
+    const int BLOCK_SIZE = 256;
+    zScore_kernel<<<(n + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE>>>(d_gpu, d_gpu + n, mean, std + eps, n);
+    *error = cuda_fmt_error(cudaMemcpy(out, d_gpu + n, n * sizeof(long long), cudaMemcpyDeviceToHost));
+    cudaFree(d_gpu);
 }
 
 void __channelWiseSumReduction(long long* inp, long long* out, int n, int c, uint8_t* error)
@@ -265,13 +400,8 @@ void __channelWiseSumReduction(long long* inp, long long* out, int n, int c, uin
         return;
     }
     
-    channelWiseSumReduction_impl(d_gpu + c, d_gpu, n, c, error);
+    __channelWiseSumReduction_impl(d_gpu + c, d_gpu, n, c, error);
 
-    if (*error = cuda_fmt_error(cudaMemcpy(out, d_gpu, c * sizeof(long long), cudaMemcpyDeviceToHost)))
-    {
-        cudaFree(d_gpu);
-        return;
-    }
-    
+    *error = *error || cuda_fmt_error(cudaMemcpy(out, d_gpu, c * sizeof(long long), cudaMemcpyDeviceToHost));
     cudaFree(d_gpu);
 }
