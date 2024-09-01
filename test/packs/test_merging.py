@@ -4,8 +4,17 @@ from tqdm import tqdm
 from tensor import Tensor
 from op import Operation, execute
 import traceback
+from utils import log as wrap_log
+from .test_registry import wrap_test
 
-def run_case(*args): 
+@wrap_test(
+    name='concatenate test',
+    repeat=1000,
+    meta={
+        'description': 'Test concatenate operation',
+    }
+)
+def concatenate_test(): 
     t1 = Tensor.random_tensor()
     t2 = Tensor.random_tensor(t1.shape)
     t3 = Tensor.random_tensor(t1.shape)
@@ -18,26 +27,3 @@ def run_case(*args):
     
     out = execute(Operation.CONCATENATE, params, [t1, t2, t3])
     return np.allclose(out.data.reshape(out.shape), expected)
-
-def benchmark_concatenate():
-    n_cases = 1000
-
-    futures = []
-    
-    try:
-        for _ in tqdm(range(n_cases), total=n_cases, desc='Running test cases'):
-            futures.append(run_case())
-    except KeyboardInterrupt:
-        print('Interrupted')
-
-    fails = sum([not f for f in futures])
-    success = len(futures) - fails
-
-    print(f'Success: {success}/{len(futures)}')
-    print(f'Fails: {fails}/{len(futures)}')
-
-    if fails > 0:
-        raise ValueError('Some test cases failed')
-
-if __name__ == '__main__':
-    benchmark_concatenate()

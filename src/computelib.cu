@@ -1150,6 +1150,48 @@ uint8_t* channel_wise_sum_reduction_call(const operation_pack& pack, int32_t* le
 }
 
 
+uint8_t* channel_wise_mean_reduction_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
+{
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in dropout_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    uint64_t prod = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>());
+    uint64_t channel = inp.back();
+
+    int64_t* out = new int64_t[channel];
+    
+    __channelWiseSumReduction(
+        (long long*)pack.tensors[0].data(), 
+        (long long*)out, 
+        prod, 
+        channel, 
+        _error
+    );
+
+    if (*_error)
+    {
+        LOG_D("Error in channel_wise_sum_reduction_call: error in channelWiseSumReduction");
+        delete[] out;
+        return nullptr;
+    }
+
+    std::vector<uint64_t> shape_out = {channel};
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(shape_out, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
+}
+
+
 uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
     if (pack.tensors.size() != 1)
@@ -1185,6 +1227,44 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
     );
 
     delete[] buffer;
+    return out_bytes;
+}
+
+uint8_t* rescale_call(const operation_pack& pack, int32_t* length_out, uint8_t* error)
+{
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in rescale_call: wrong number of tensors");
+        *error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    const int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+
+    int64_t* out = new int64_t[n];
+    // __rescale(
+    //     (long long*)pack.tensors[0].data(), 
+    //     (long long*)out, 
+    //     n, 
+    //     pack.params[0], 
+    //     pack.params[1], 
+    //     error
+    // );
+
+    if (*error)
+    {
+        LOG_D("Error in rescale_call: error in rescale");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
     return out_bytes;
 }
 
@@ -1558,6 +1638,21 @@ const uint8_t* cuda_execute_operation(
     if (pack.op == opcode::GLOBAL_AVGPOOLING2D)
     {
         return wrap_return_fn(globalavgpooling_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::RESCALE)
+    {
+        return wrap_return_fn(rescale_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::CHANNEL_WISE_MEAN_REDUCTION) // 31
+    {
+        return wrap_return_fn(channel_wise_mean_reduction_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::CHANNEL_WISE_SUM_REDUCTION) // 31
+    {
+        return wrap_return_fn(channel_wise_sum_reduction_call(pack, length_out, _error));
     }
 
     return wrap_return_fn();

@@ -9,7 +9,7 @@ ifeq ($(debug), 1)
 	CPP_SYMBOLS=-DLOGGING_DEBUG -DLOGGING_VERBOSE
 	
 else
-	CPP_SYMBOLS=
+	CPP_SYMBOLS=-DNDEBUG
 endif 
 
 kernels.o: algo/kernels.cu
@@ -22,6 +22,10 @@ matrixmul.o: algo/matrixmul.cu
 
 element_wise_operator.o:  algo/element_wise_operator.cu
 	nvcc --compiler-options -fPIC -c -o element_wise_operator.o  algo/element_wise_operator.cu \
+	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
+
+transforms.o:  algo/transforms.cu
+	nvcc --compiler-options -fPIC -c -o transforms.o  algo/transforms.cu \
 	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 normalization.o:  algo/normalization.cu
@@ -61,9 +65,9 @@ helpers.o: utils/helpers.cu
 	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 libcomputelib.so: matrixmul.o element_wise_operator.o normalization.o conv.o pooling.o \
-	activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o
+	activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o transforms.o
 	nvcc --ptxas-options=-v -o libcomputelib.so --shared matrixmul.o element_wise_operator.o normalization.o \
-	conv.o pooling.o activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o \
+	conv.o pooling.o activations.o merging.o kernels.o reduction.o wrapper.o computelib.o helpers.o transforms.o \
 	$(HEADERS) $(OPTIMIZATION) $(COMPILE_FLAGS) $(CPP_VERSION) $(CPP_SYMBOLS)
 
 
@@ -74,44 +78,8 @@ main: main.cu libcomputelib.so helpers.o
 exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main
 
-test_abi: libcomputelib.so	
-	python3 ../test/test_abi.py
-
-test_act: libcomputelib.so
-	python3 ../test/test_activations.py
-
-test_elementwise: libcomputelib.so
-	python3 ../test/test_elementwise.py
-
-test_matmul: libcomputelib.so
-	python3 ../test/test_matmul.py
-
-test_transformation: libcomputelib.so
-	python3 ../test/test_transformation.py
-
-test_merging: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_merging.py
-
-test_pooling: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_pooling.py
-
-test_conv2d: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_conv2d.py
-
-test_norm: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_norm.py
-
-test_reduction: libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/test_reduction.py
-
-benchmark: clean libcomputelib.so
-	TF_CPP_MIN_LOG_LEVEL=3 python3 ../test/benchmark.py
-
-test_all: clean test_pooling test_conv2d test_norm test_reduction \
-	test_merging test_transformation test_matmul test_elementwise \
-	test_act test_abi
-
-	echo "All tests passed"
+test: libcomputelib.so
+	python ../test/test.py
 
 release: clean libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi
