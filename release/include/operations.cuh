@@ -6,12 +6,11 @@
 #include <fixedlonglong32x32.cuh>
 #include <kernels.cuh>
 
-// recursive implementation of reductions
 void __channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error);
 long long __sumReduction_impl(long long* d_gpu, int n, uint8_t* error);
 long long __maxReduction_impl(long long* d_gpu, int n, uint8_t* error);
 long long __minReduction_impl(long long* d_gpu, int n, uint8_t* error);
-long long __meanReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __meanReduction_impl(long long* gpu_inp, int n, uint8_t* error);
 long long __stdReduction_impl(long long* d_gpu, int n, uint8_t* error);
 
 // matrix mutiplications
@@ -35,6 +34,7 @@ void __matSubLongLong(long long *A, long long *B, long long *C, int m, int n, ui
 void __matMulLongLong(long long *A, long long *B, long long *C, int m, int n, uint8_t* error);
 void __matDivLongLong(long long *A, long long *B, long long *C, int m, int n , uint8_t* error);
 void __matSqrtLongLong(long long *A, long long *B, int m, int n, uint8_t* error);
+void __matExpLongLong(long long *A, long long *B, int m, int n, uint8_t* error);
 
 // conv2d operations
 void __conv2dFixedLongLong(long long* inp, long long* kernel, long long* bias, long long* out, int kernel_size, int in_channel, int out_channel, int h, int w, int padding, int stride_h, int stride_w, uint8_t* error);
