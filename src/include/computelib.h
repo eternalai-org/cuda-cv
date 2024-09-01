@@ -64,9 +64,9 @@ enum opcode
     GLOBAL_AVGPOOLING2D = 28, // 28
 
     // batch 2 operations
-
-    // transformations 
-    RESCALE = 29 // 29
+    RESCALE = 29, // 29
+    CHANNEL_WISE_MEAN_REDUCTION = 30, // 30    
+    CHANNEL_WISE_SUM_REDUCTION = 31, // 31   
 };
 
 // abi operations

@@ -214,8 +214,8 @@ __global__ void maxReduction_kernel(long long* d_gpu, long long* blockOutput, in
 
     extern __shared__ long long s_out[];
 
-    s_out[tid] = 0;
-    s_out[tid + blockDim.x] = 0;
+    s_out[tid] = d_gpu[0];
+    s_out[tid + blockDim.x] = d_gpu[0];
 
     if (glbl_tid < n)
     {
