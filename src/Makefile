@@ -79,7 +79,11 @@ exec: main
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(pwd) ./main
 
 test: libcomputelib.so
-	python ../test/test.py
+	python ../test/run.py
+
+debug: libcomputelib.so
+	python ../test/debug.py
+
 
 release: clean libcomputelib.so
 	if [ -d "build" ]; then rm -rf build; fi

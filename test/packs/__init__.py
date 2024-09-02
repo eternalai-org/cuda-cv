@@ -1,5 +1,4 @@
 import os
-# disable tensorflow logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from .import test_registry
@@ -15,4 +14,4 @@ from .test_pooling import *
 from .test_reduction import *
 from .test_transformation import *
 
-from .test_registry import run_tests, run_benchmarks, list_names
+from .test_registry import run_tests, list_names

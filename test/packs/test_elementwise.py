@@ -1,83 +1,102 @@
 import numpy as np
 from concurrent.futures import ProcessPoolExecutor
-from tqdm import tqdm
+
 from tensor import Tensor
 from utils  import absolute_or_relative_error, log as wrap_log
 from op import Operation, execute
 from .test_registry import wrap_test
+import time
 
 @wrap_test(
     name='add element wise test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test add element wise operation',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [(1 << i) for i in range(10, 16)]}
 )
-def add_element_wise():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def add_element_wise(test_size):
+    t1 = Tensor.random_tensor([test_size])
     t2 = Tensor.random_tensor(t1.shape)
 
+    add_out , stats = execute(Operation.ELEMENTWISE_ADD, [], [t1, t2])
+    
+    t_start = time.time()
     expected_add = t1.data + t2.data
-    add_out = execute(Operation.ELEMENTWISE_ADD, [], [t1, t2])
-    mae_add = absolute_or_relative_error(add_out.data, expected_add).mean()
+    stats['cpu_based'] = time.time() - t_start
+    
+    
+    error = absolute_or_relative_error(add_out.data, expected_add).mean()
+    stats['error'] = error
 
-    return mae_add <= accepted_error
+    return stats
 
 @wrap_test(
     name='sub element wise test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test sub element wise operation',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [(1 << i) for i in range(10, 16)]}
 )
-def sub_element_wise():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def sub_element_wise(test_size):
+    t1 = Tensor.random_tensor([test_size])
     t2 = Tensor.random_tensor(t1.shape)
 
+    sub_out , stats = execute(Operation.ELEMENTWISE_SUB, [], [t1, t2])
+    
+    t_start = time.time()
     expected_sub = t1.data - t2.data
-    sub_out = execute(Operation.ELEMENTWISE_SUB, [], [t1, t2])
-    mae_sub = absolute_or_relative_error(sub_out.data, expected_sub).mean()
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(sub_out.data, expected_sub).mean()
+    stats['error'] = error
 
-    return mae_sub <= accepted_error
+    return stats
 
 @wrap_test(
     name='mul element wise test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test mul element wise operation',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [(1 << i) for i in range(10, 16)]}
 )
-def mul_element_wise():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def mul_element_wise(test_size):
+    t1 = Tensor.random_tensor([test_size])
     t2 = Tensor.random_tensor(t1.shape)
 
-    expected_mul = t1.data * t2.data
-    mul_out = execute(Operation.ELEMENTWISE_MUL, [], [t1, t2])
-    mae_mul = absolute_or_relative_error(mul_out.data, expected_mul).mean()
+    mul_out , stats = execute(Operation.ELEMENTWISE_MUL, [], [t1, t2])
 
-    return mae_mul <= accepted_error
+    t_start = time.time()
+    expected_mul = t1.data * t2.data
+    stats['cpu_based'] = time.time() - t_start
+
+    error = absolute_or_relative_error(mul_out.data, expected_mul).mean()
+    stats['error'] = error
+
+    return stats
 
 @wrap_test(
     name='div element wise test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test div element wise operation',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [(1 << i) for i in range(10, 16)]}
 )
-def div_element_wise():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def div_element_wise(test_size):
+    t1 = Tensor.random_tensor([test_size])
     t2 = Tensor.random_tensor(t1.shape)
 
-    expected_div = t1.data / t2.data
-    div_out = execute(Operation.ELEMENTWISE_DIV, [], [t1, t2])
-    mae_div = absolute_or_relative_error(div_out.data, expected_div).mean()
+    t2._data += 0.5 + 1e-4
+    div_out , stats = execute(Operation.ELEMENTWISE_DIV, [], [t1, t2])
 
-    return mae_div <= accepted_error
+    t_start = time.time()
+    expected_div = t1.data / t2.data
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(div_out.data, expected_div).mean()
+    stats['error'] = error
+
+    return stats

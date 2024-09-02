@@ -15,6 +15,7 @@
 *.so
 *.dylib
 *.dll
+*.pyc
 
 # Fortran module files
 *.mod
@@ -32,3 +33,5 @@
 *.app
 
 !release/*.so
+
+**/test_results

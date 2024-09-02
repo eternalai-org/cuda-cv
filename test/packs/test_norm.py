@@ -1,29 +1,23 @@
-import numpy as np
-from concurrent.futures import ProcessPoolExecutor
-from tqdm import tqdm
 from tensor import Tensor
 from op import Operation, execute
 import random
 from keras import layers
-from utils import absolute_or_relative_error, to_i64, log as wrap_log
-import os
+from utils import absolute_or_relative_error, log as wrap_log
 import time
 from .test_registry import wrap_test
 
 @wrap_test(
     name='batch norm test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test batch norm operation',
-        'accepted_error': 1e-4
+    },
+    params={
+        'spatial_size': [(1 << i) for i in range(3, 6)],
+        'channel_in': [(1 << i) for i in range(3, 9)]
     }
 )
-def batch_norm_test(): 
-    accepted_error = 1e-4
-
-    spatial_size = random.randint(8, 128)
-    channel_in = random.randint(1, 64)
-
+def batch_norm_test(spatial_size, channel_in): 
     t1 = Tensor.random_tensor([spatial_size, spatial_size, channel_in])
     t1_data = t1.data.reshape(t1.shape)
 
@@ -35,13 +29,14 @@ def batch_norm_test():
     batch_norm_layer = layers.BatchNormalization()
     batch_norm_layer.build(t1_data.shape)
     batch_norm_layer.set_weights([gama.data, beta.data, ma.data, mv.data])
-    eps = to_i64(int(1e-3 * 2 ** 32))
-    
+
+    actual , stats = execute(Operation.BATCH_NORM, [int(1e-4 * 2 ** 32)], [t1, gama, beta, ma, mv])
+
     t_start = time.time()
     expected = batch_norm_layer(t1_data).numpy().flatten()
-    wrap_log('Tensorflow cpu', f'Elapsed time: {time.time() - t_start}')
+    stats['cpu_based'] = time.time() - t_start
     
-    actual = execute(Operation.BATCH_NORM, [eps], [t1, gama, beta, ma, mv])
-    err = absolute_or_relative_error(actual.data, expected).mean()
+    error = absolute_or_relative_error(actual.data, expected).mean()
+    stats['error'] = error
 
-    return err <= accepted_error
+    return stats

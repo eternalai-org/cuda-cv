@@ -1204,7 +1204,7 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
     const std::vector<uint64_t>& inp = pack.tensors[0].shape();
     
     int64_t prod = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>()); 
-    int64_t* buffer = new int64_t[prod];
+    int64_t* buffer = new int64_t[inp.back()];
 
     __globalAvgPoolingFixedLongLong(
         (long long*)pack.tensors[0].data(), 

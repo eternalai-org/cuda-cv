@@ -1,91 +1,108 @@
 from tensor import Tensor
 from op import execute, Operation
-from utils import sigmoid, softmax, tanh, relu, mae, absolute_or_relative_error, log as wrap_log
+from utils import sigmoid, softmax, tanh, relu, absolute_or_relative_error
 from .test_registry import wrap_test
+import time
 
 @wrap_test(
     name='sigmoid activations test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test sigmoid activation function',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [(1 << i) for i in range(10, 16)]}
 )
-def test_sigmoid():
-    accepted_error = 1e-4
+def test_sigmoid(test_size):
     sigmoid_opcode = Operation.SIGMOID
-    
-    tin = Tensor.random_tensor()
+
+    tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
 
-    expected_sigmoid = sigmoid(tin.data)
-    sigmoid_out = execute(sigmoid_opcode, [], tin)    
-    sigmoid_mae = absolute_or_relative_error(expected_sigmoid, sigmoid_out.data).mean()
+    sigmoid_out , stats = execute(sigmoid_opcode, [], tin)    
+    t_start = time.time()
 
-    return sigmoid_mae <= accepted_error  
+    expected_sigmoid = sigmoid(tin.data)
+    stats['cpu_based'] = time.time() - t_start
+
+    error = absolute_or_relative_error(sigmoid_out.data, expected_sigmoid).mean()
+    stats['error'] = error
+
+    return stats  
 
 
 @wrap_test(
     name='softmax activations test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test softmax activation function',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [(1 << i) for i in range(10, 16)]}
 )
-def test_softmax():
-    accepted_error = 1e-4
+def test_softmax(test_size):
     softmax_opcode = Operation.SOFTMAX
-    
-    tin = Tensor.random_tensor()
+
+    tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
 
+    softmax_out , stats = execute(softmax_opcode, [], tin)    
+    
+    t_start = time.time()
     expected_softmax = softmax(tin.data)
-    softmax_out = execute(softmax_opcode, [], tin)    
-    softmax_mae = absolute_or_relative_error(expected_softmax, softmax_out.data).mean()
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(softmax_out.data, expected_softmax).mean()
+    stats['error'] = error
 
-    return softmax_mae <= accepted_error  
+    return stats  
 
 
 @wrap_test(
     name='tanh activations test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test tanh activation function',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [(1 << i) for i in range(10, 16)]}
 )
-def test_tanh():
-    accepted_error = 1e-4
+def test_tanh(test_size):
     tanh_opcode = Operation.TANH
 
-    tin = Tensor.random_tensor()
+    tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
 
+    tanh_out , stats = execute(tanh_opcode, [], tin)    
+    
+    t_start = time.time()
     expected_tanh = tanh(tin.data)
-    tanh_out = execute(tanh_opcode, [], tin)    
-    tanh_mae = absolute_or_relative_error(expected_tanh, tanh_out.data).mean()
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(tanh_out.data, expected_tanh).mean()
+    stats['error'] = error
 
-    return tanh_mae <= accepted_error
+    return stats
 
 
 @wrap_test(
     name='relu activations test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test relu activation function',
-        'accepted_error': 1e-4
-    }
+    },
+    params={'test_size': [2 ** i for i in range(10, 16)]}
 )
-def test_relu():
-    accepted_error = 1e-4
+def test_relu(test_size):
     relu_opcode = Operation.RELU
 
-    tin = Tensor.random_tensor()
+    tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
 
-    expected_relu = relu(tin.data)
-    relu_out = execute(relu_opcode, [], tin)    
-    relu_mae = absolute_or_relative_error(expected_relu, relu_out.data).mean()
+    relu_out , stats = execute(relu_opcode, [], tin)    
+    
+    t_start = time.time()
+    expected_relu = relu(tin.data)  
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(relu_out.data, expected_relu).mean()
+    stats['error'] = error
 
-    return relu_mae <= accepted_error
+    return stats

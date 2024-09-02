@@ -74,11 +74,11 @@ def decode(b: bytes) -> Tensor:
     return Tensor.uncompress(data, shape)
 
 def execute(op: int, params, tensor: Tensor) -> Tensor:
-    wraplog('Executing', op)
+    time_track = {}
 
-    t_start = time.time()
+    t_start_0 = time.time()
     b = encode(op, params, tensor)
-    wraplog('Encoded', op, len(b) / 1e6, 'mb', f'Elapsed time: {time.time() - t_start}')
+    time_track['encode'] = time.time() - t_start_0
     
     length_out = ctypes.c_int()
     has_error = ctypes.c_int()
@@ -86,17 +86,9 @@ def execute(op: int, params, tensor: Tensor) -> Tensor:
     length_out_ptr = ctypes.pointer(length_out)
     has_error_ptr = ctypes.pointer(has_error)
     
-    # b64 = base64.b64encode(b)
-    # with open('encoded.txt', 'w') as f:
-    #     f.write(b64.decode())
-    
     t_start = time.time()
     out = dll.cuda_execute_operation(b, len(b), length_out_ptr, has_error_ptr) 
-    t_end = time.time()
-    
-    wraplog('Operation', op, f'Elapsed time: {t_end - t_start}')
-    wraplog('CUDA error', has_error.value)
-    wraplog('Output length', length_out.value)
+    time_track['cuda_execute'] = time.time() - t_start
 
     if has_error.value != 0:
         raise ValueError('CUDA error')
@@ -105,10 +97,11 @@ def execute(op: int, params, tensor: Tensor) -> Tensor:
     
     t_start = time.time()
     (tensor_out, shape_out) = abi_decode(('uint256[]', 'uint64[]'), deref)
-    wraplog('Decoded', op, len(deref) / 1e6, 'mb', f'Elapsed time: {time.time() - t_start}')
+    tout = Tensor.uncompress(tensor_out, shape_out)
+    time_track['decode'] = time.time() - t_start
 
     dll.deallocate_cpp_response(out)
     
-    tout = Tensor.uncompress(tensor_out, shape_out)
-    
-    return tout
+    time_track['total'] = time.time() - t_start_0
+
+    return tout, time_track

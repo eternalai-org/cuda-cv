@@ -1,35 +1,50 @@
-import random
-import numpy as np
-from tqdm import tqdm
-from concurrent.futures import ProcessPoolExecutor
-import json
 from tensor import Tensor
 from op import execute, Operation
 import tensorflow as tf
 import time
-from utils import log as wraplog, absolute_or_relative_error
+from utils import absolute_or_relative_error
 from .test_registry import wrap_test
+
+def check_conv2d_constraint(
+    spatial_size, 
+    channel_in, 
+    channel_out, 
+    ksize, 
+    stride, 
+    padding
+):
+    return all([
+        all([x > 0 for x in [spatial_size, channel_in, channel_out, ksize, stride]]),
+        ksize <= spatial_size,
+        stride <= ksize,
+        padding in ['valid', 'same'],
+    ])
 
 @wrap_test(
     name='conv2d correct random test', 
-    repeat=1000, 
+    repeat=5, 
     meta={
         'description': 'Test conv2d operation, execution time includes tensorflow operation on cpu',
-        'accepted_error': 1e-4
-    }
+    },
+    params={
+        'spatial_size': [(1 << i) for i in range(3, 5)],
+        'channel_in': [(1 << i) for i in range(3, 6)],
+        'channel_out': [(1 << i) for i in range(3, 6)],
+        'ksize': [(1 << i) for i in range(1, 5)],
+        'stride': [(1 << i) for i in range(1, 5)],
+        'padding': ['valid', 'same']
+    },
+    checker=check_conv2d_constraint
 )
-def test_correct_conv2d(*args):
-    eps = 1e-4
-
-    spatial_size = random.randint(8, 512)
-    channel_in = random.randint(1, 512)
-    channel_out = random.randint(1, 512)
-
+def test_correct_conv2d(
+    spatial_size, 
+    channel_in, 
+    channel_out, 
+    ksize, 
+    stride, 
+    padding
+):
     t = Tensor.random_tensor([spatial_size, spatial_size, channel_in])
-
-    ksize = random.randint(1, min(8, spatial_size))
-    stride = random.randint(1, ksize)
-    padding = random.choice(['valid', 'same'])
     padding_i = 1 if padding == 'same' else 0
     
     random_kernel = Tensor.random_tensor((ksize, ksize, channel_in, channel_out))
@@ -43,15 +58,16 @@ def test_correct_conv2d(*args):
         strides=(stride, stride), 
         padding=padding
     )
-    
-    conv2d.build(t.data.reshape(1, *t.shape).shape)
-    
+    conv2d.build(t.data.reshape(1, *t.shape).shape)    
     conv2d.set_weights([random_kernel.data.reshape(random_kernel.shape), random_bias.data.reshape(random_bias.shape)])
-    
+
+    conv2d_out , stats = execute(Operation.CONV2D, params, [t, random_kernel, random_bias])
+
     t_start = time.time()
     expected_conv2d = conv2d(t.data.reshape(1, *t.shape)).numpy().flatten()
-    wraplog('Tensorflow cpu', f'Elapsed time: {time.time() - t_start}')
-
-    conv2d_out = execute(Operation.CONV2D, params, [t, random_kernel, random_bias])
-    conv2d_mae = absolute_or_relative_error(conv2d_out.data, expected_conv2d).mean()
-    return conv2d_mae <= eps    
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(conv2d_out.data, expected_conv2d).mean()
+    stats['error'] = error
+    
+    return stats

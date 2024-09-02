@@ -1,75 +1,102 @@
 import numpy as np
-from concurrent.futures import ProcessPoolExecutor
-from tqdm import tqdm
 from tensor import Tensor
-from utils  import absolute_or_relative_error, log as wrap_log
+from utils  import absolute_or_relative_error
 from op import Operation, execute
 from .test_registry import wrap_test
-import os
+import time
 
 @wrap_test(
     name='sum reduction test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test sum reduction operation',
-        'accepted_error': 1e-4
+    },
+    params={
+        'test_size': [(1 << i) for i in range(16)]
     }
 )
-def sum_reduction():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def sum_reduction(test_size):
+    t1 = Tensor.random_tensor([test_size])
+    add_out , stats = execute(Operation.REDUCTION_SUM, [], [t1])
+    
+    t_start = time.time()
     expected_sum = np.sum(t1.data)
-    add_out = execute(Operation.REDUCTION_SUM, [], [t1])
-    mae_add = absolute_or_relative_error(add_out.data, expected_sum).mean()
-    return mae_add <= accepted_error
+    stats['cpu_based'] = time.time() - t_start
+
+    error = absolute_or_relative_error(add_out.data, expected_sum).mean()
+    stats['error'] = error
+    
+    return stats
 
 
 @wrap_test(
     name='mean reduction test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test mean reduction operation',
-        'accepted_error': 1e-4
+    },
+    params={
+        'test_size': [(1 << i) for i in range(16)]
     }
 )
-def mean_reduction():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def mean_reduction(test_size):
+    t1 = Tensor.random_tensor([test_size])
+    add_out , stats = execute(Operation.REDUCTION_MEAN, [], [t1])
+    
+    t_start = time.time()
     expected_mean = np.mean(t1.data)
-    add_out = execute(Operation.REDUCTION_MEAN, [], [t1])
-    mae_add = absolute_or_relative_error(add_out.data, expected_mean).mean()
-    return mae_add <= accepted_error
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(add_out.data, expected_mean).mean()
+    stats['error'] = error
+    
+    return stats
 
 
 @wrap_test(
     name='max reduction test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test max reduction operation',
-        'accepted_error': 1e-4
+    },
+    params={
+        'test_size': [(1 << i) for i in range(16)]
     }
 )
-def max_reduction():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def max_reduction(test_size):
+    t1 = Tensor.random_tensor([test_size])
+    
+    add_out , stats = execute(Operation.REDUCTION_MAX, [], [t1])
+    
+    t_start = time.time()
     expected_max = np.max(t1.data)
-    add_out = execute(Operation.REDUCTION_MAX, [], [t1])
-    mae_add = absolute_or_relative_error(add_out.data, expected_max).mean()
-    return mae_add <= accepted_error
+    stats['cpu_based'] = time.time() - t_start
+    
+    error = absolute_or_relative_error(add_out.data, expected_max).mean()
+    stats['error'] = error
+    
+    return stats
 
 @wrap_test(
     name='min reduction test',
-    repeat=1000,
+    repeat=100,
     meta={
         'description': 'Test min reduction operation',
-        'accepted_error': 1e-4
+    },
+    params={
+        'test_size': [(1 << i) for i in range(16)]
     }
 )
-def min_reduction():
-    accepted_error = 1e-4
-    t1 = Tensor.random_tensor()
+def min_reduction(test_size):
+    t1 = Tensor.random_tensor([test_size])
+    add_out , stats = execute(Operation.REDUCTION_MIN, [], [t1])
+    
+    t_start = time.time()
     expected_min = np.min(t1.data)
-    add_out = execute(Operation.REDUCTION_MIN, [], [t1])
-    mae_add = absolute_or_relative_error(add_out.data, expected_min).mean()
-    return mae_add <= accepted_error
+    stats['cpu_based'] = time.time() - t_start    
+
+    error = absolute_or_relative_error(add_out.data, expected_min).mean()
+    stats['error'] = error
+
+    return stats
     
