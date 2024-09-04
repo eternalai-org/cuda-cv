@@ -9,13 +9,14 @@
 #include <numeric>
 
 #if defined(LOGGING_DEBUG) || defined(LOGGING_VERBOSE)
-#define LOG_D(x) std::cerr << "[DEBUG][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
+#include <ctime>
+#define LOG_D(x) std::cerr << "[DEBUG]" << "[" << std::time(nullptr) << "][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
 #else
 #define LOG_D(x)
 #endif
 
 #if defined(LOGGING_VERBOSE)
-#define LOG_V(x) std::cerr << "[VERBOSE][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
+#define LOG_V(x) std::cerr << "[VERBOSE]" << "[" << std::time(nullptr) << "][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
 #else
 #define LOG_V(x)
 #endif
