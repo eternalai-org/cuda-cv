@@ -54,70 +54,66 @@ def run_tests(targets=[], **_):
 
     tests_results = []
     for i, (test_name, meta, fn, rp, params, checker) in enumerate(__test_fn_registry):
-        if test_name in targets:
-            continue
-        
-        total_error, executed = 0, 0
+        if len(targets) == 0 or test_name in targets:
+            
+            total_error, executed = 0, 0
 
-        p_keys = list(params.keys()) 
-        
-        if len(p_keys) == 0:
-            p_keys = ['_']
-            p_combinations = [()]
-        else:
-            p_combinations = list(itertools.product(*[params[k] for k in p_keys]))
-        
-        p_combinations = [p for p in p_combinations if checker(**dict(zip(p_keys, p)))]
-        pbar_local = manager.counter(total=rp * len(p_combinations), desc=f'Test {test_name}', unit='iterations')
+            p_keys = list(params.keys()) 
+            
+            if len(p_keys) == 0:
+                p_keys = ['_']
+                p_combinations = [()]
+            else:
+                p_combinations = list(itertools.product(*[params[k] for k in p_keys]))
+            
+            p_combinations = [p for p in p_combinations if checker(**dict(zip(p_keys, p)))]
+            pbar_local = manager.counter(total=rp * len(p_combinations), desc=f'Test {test_name}', unit='iterations')
 
-        log(f'--- Running test {test_name} ---')
+            log(f'--- Running test {test_name} ---')
 
-        for k, v in meta.items():
-            log(f'   - {k}: {v}')
-        
-        test_results = []
+            for k, v in meta.items():
+                log(f'   - {k}: {v}')
+            
+            test_results = []
 
-        try:
-            for p in p_combinations:
-                params_d = dict(zip(p_keys, p))
-                    
-                
-                log(f'Running test {test_name} with params:')
-                for k, v in params_d.items():
-                    log(f'  - {k}: {v}')
+            try:
+                for p in p_combinations:
+                    params_d = dict(zip(p_keys, p))
+                        
+                    log(f'Running test {test_name} with params:')
+                    for k, v in params_d.items():
+                        log(f'  - {k}: {v}')
 
-                for i, stats in enumerate(repeat(fn, rp, params_d)):
+                    for i, stats in enumerate(repeat(fn, rp, params_d)):
 
-                    executed += 1
-                    pbar_local.update()
+                        executed += 1
+                        pbar_local.update()
 
-                    stats['test_name'] = test_name
-                    stats['params'] = params_d
-                    
-                    test_results.append(stats)
-                    total_error += stats['error']
+                        stats['test_name'] = test_name
+                        stats['params'] = params_d
+                        
+                        test_results.append(stats)
+                        total_error += stats['error']
+                        pstatus.update(stage=f'Test {test_name}', status=f'Avg error: {total_error / executed:.9f} ({executed}/{rp * len(p_combinations)})')
 
-                    if i % 10 == 0:
-                        pstatus.update(stage=f'Test {test_name}', status=f'Avg error: {total_error / executed:.4f} ({executed}/{rp * len(p_combinations)})')
+            except KeyboardInterrupt:
+                log('Interrupted')
 
-        except KeyboardInterrupt:
-            log('Interrupted')
+            pbar_local.close()
+            total_executed += executed
 
-        pbar_local.close()
-        total_executed += executed
+            with open(f'test_results/{test_name}.json', 'w') as f:
+                import json
+                json.dump(test_results, f)
 
-        with open(f'test_results/{test_name}.json', 'w') as f:
-            import json
-            json.dump(test_results, f)
+            tests_results.append({
+                'test_name': test_name,
+                'meta': meta,
+                'details': test_results,
+                'total_error': total_error,
+            })
 
-        tests_results.append({
-            'test_name': test_name,
-            'meta': meta,
-            'details': test_results,
-            'total_error': total_error,
-        })
-
-        pbar_global.update()        
+            pbar_global.update()        
         
     pbar_global.close()
     return tests_results

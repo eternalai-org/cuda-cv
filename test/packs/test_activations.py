@@ -17,6 +17,7 @@ def test_sigmoid(test_size):
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= 40
 
     sigmoid_out , stats = execute(sigmoid_opcode, [], tin)    
     t_start = time.time()
@@ -43,6 +44,7 @@ def test_softmax(test_size):
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= 40
 
     softmax_out , stats = execute(softmax_opcode, [], tin)    
     
@@ -69,6 +71,7 @@ def test_tanh(test_size):
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= 40
 
     tanh_out , stats = execute(tanh_opcode, [], tin)    
     
@@ -95,6 +98,7 @@ def test_relu(test_size):
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= 40
 
     relu_out , stats = execute(relu_opcode, [], tin)    
     

@@ -15,11 +15,13 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
         return;
     }
 
-    mat_exp_fixed_longlong<<<BLOCKS, BLOCK_SIZE>>>(gpu, gpu + m, m);
-    long long sumExp = __sumReduction_impl(gpu + m, m, error);
+    cvt_fll2fp64<<<BLOCKS, BLOCK_SIZE>>>(gpu, (double *) gpu + m, m);
+    mat_exp_fp64<<<BLOCKS, BLOCK_SIZE>>>((double *) gpu + m, (double *) gpu, m);
+    double sumExp = __sumReduction_fp64_impl((double *) gpu, m, error);
 
     if (!*error && sumExp != 0) {
-        softmaxImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu + m, gpu, m, sumExp);
+        softmaxImpl_fp64<<<BLOCKS, BLOCK_SIZE>>>((double *) gpu, (double *) gpu + m, m, sumExp);
+        cvt_fp642fll<<<BLOCKS, BLOCK_SIZE>>>((double *) gpu + m, gpu, m);
         
         if (*error = cuda_fmt_error(cudaMemcpy(B, gpu, sizeof(long long) * m, cudaMemcpyDeviceToHost)))
         {
@@ -56,13 +58,12 @@ void __sigmoidFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
         cudaFree(gpu_a), cudaFree(gpu_b);
         return;
     }
-    sigmoidImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu_a, gpu_b, m);
 
-    if (*error = cuda_fmt_error(cudaMemcpy(B, gpu_b, sizeof(long long)*m, cudaMemcpyDeviceToHost)))
-    {
-        cudaFree(gpu_a), cudaFree(gpu_b);
-        return;
-    }
+    cvt_fll2fp64<<<BLOCKS, BLOCK_SIZE>>>(gpu_a, (double *) gpu_b, m);
+    sigmoidImpl_fp64<<<BLOCKS, BLOCK_SIZE>>>((double *) gpu_b, (double *) gpu_a, m);
+    cvt_fp642fll<<<BLOCKS, BLOCK_SIZE>>>((double *) gpu_a, gpu_b, m);
+
+    *error = cuda_fmt_error(cudaMemcpy(B, gpu_b, sizeof(long long)*m, cudaMemcpyDeviceToHost));
     cudaFree(gpu_a), cudaFree(gpu_b);
 }
 
@@ -93,7 +94,7 @@ void __tanhFixedLongLong(long long *A, long long *B, int m, uint8_t* error)
     }
     tanhImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu_a, gpu_b, m);
 
-    if (*error = cuda_fmt_error(cudaMemcpy(B, gpu_b, sizeof(long long)*m, cudaMemcpyDeviceToHost)));
+    *error = cuda_fmt_error(cudaMemcpy(B, gpu_b, sizeof(long long)*m, cudaMemcpyDeviceToHost));
     cudaFree(gpu_a), cudaFree(gpu_b);
 }
 
@@ -213,7 +214,10 @@ void __tanh3DFixedLongLong(long long *A, long long *B, int h, int w, int c, uint
 
     const dim3 BLOCK_SIZE(256);
     const dim3 BLOCKS((N + BLOCK_SIZE.x - 1) / BLOCK_SIZE.x);
-    tanhImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu, gpu + N, N);
+    
+    cvt_fll2fp64<<<BLOCKS, BLOCK_SIZE>>>( gpu, (double *) gpu + N, N);
+    tanhImpl_fp64<<<BLOCKS, BLOCK_SIZE>>>((double *) gpu + N, (double *) gpu, N);
+    cvt_fp642fll<<<BLOCKS, BLOCK_SIZE>>>((double *) gpu, gpu + N, N);
 
     if (*error = cuda_fmt_error(cudaMemcpy(B, gpu + N, sizeof(long long) * N, cudaMemcpyDeviceToHost)));
     cudaFree(gpu);

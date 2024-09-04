@@ -3,10 +3,14 @@
 
 __global__ void arraySum_kernel(long long* A, long long* sum, int n);
 __global__ void arrayExp_kernel(long long* A, long long* B, int n);
+__global__ void mat_exp_fp64(double *A, double *B, int n);
 __global__ void softmaxImplFixedLongLong(long long *expA, long long* B, int n, long long sumExp);
+__global__ void softmaxImpl_fp64(double *expA, double* B, int n, double sumExp);
 __global__ void reluImplFixedLongLong(long long *A, long long* B, int m);
 __global__ void sigmoidImplFixedLongLong(long long *A, long long* B, int n);
+__global__ void sigmoidImpl_fp64(double *A, double* B, int n);
 __global__ void tanhImplFixedLongLong(long long *A, long long* B, int n);
+__global__ void tanhImpl_fp64(double *A, double* B, int n);
 __global__ void vecmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k);
 __global__ void vecmulInt(int *A, int *B, int *C, int m, int n, int k);
 __global__ void vecmulLong(long *A, long *B, long *C, int m, int n, int k);
@@ -38,6 +42,8 @@ __global__ void avgPoolingImplFixedLongLong_kernel(
     int padded_top, int padded_bottom, 
     int padded_left, int padded_right 
 );
+
+__global__ void sumReduction_fp64_kernel(double* d_gpu, double* blockOutput, int n);
 __global__ void sumReduction_kernel(long long* d_gpu, long long* blockOutput, int n);
 __global__ void sumReductionV2_kernel(long long* d_gpu, long long* blockOutput, int n, int c);
 __global__ void maxReduction_kernel(long long* d_gpu, long long* blockOutput, int n);
@@ -79,5 +85,9 @@ __global__ void mat_mul_single_fixed_longlong(long long *A, long long *B, long l
 __global__ void mat_div_single_fixed_longlong(long long *A, long long *B, long long e, int n);
 
 __global__ void mat_pow2_single_fixed_longlong(long long *A, long long *B, int n);
+
+
+__global__ void cvt_fll2fp64(long long *A, double *B, int n);
+__global__ void cvt_fp642fll(double *A, long long *B, int n);
 
 #endif // __CUDA_KERNELS_CUH__

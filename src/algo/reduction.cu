@@ -50,6 +50,54 @@ long long __sumReduction_impl(long long* d_gpu, int n, uint8_t* error)
 }
 
 
+// implementations - no mempory allocation or deallocation for the input
+double __sumReduction_fp64_impl(double* d_gpu, int n, uint8_t* error)
+{
+    if (!n)
+    {
+        *error = 1;
+        return 0;
+    }
+
+    double res = 0;
+    int block_sz = 256;
+    int block_sz2 = block_sz * 2;
+    int grid_sz = (n + block_sz2 - 1) / block_sz2;
+
+    double* blockSum;
+
+    if (*error = cuda_fmt_error(cudaMalloc(&blockSum, grid_sz * sizeof(double))))
+    {
+        cudaFree(blockSum);
+        return 0;
+    }
+
+    if (*error = cuda_fmt_error(cudaMemset(blockSum, 0, grid_sz * sizeof(double))))
+    {
+        cudaFree(blockSum);
+        return 0;
+    }
+
+    sumReduction_fp64_kernel<<<grid_sz, block_sz, block_sz2 * sizeof(double)>>>(d_gpu, blockSum, n);
+
+    if (grid_sz > 1)
+    {
+        res = __sumReduction_fp64_impl(blockSum, grid_sz, error);
+    }
+    else
+    {
+        if (*error = cuda_fmt_error(cudaMemcpy(&res, blockSum, sizeof(double), cudaMemcpyDeviceToHost)))
+        {
+            cudaFree(blockSum);
+            return 0;
+        }
+    }
+
+    cudaFree(blockSum);
+    return res;
+}
+
+
 
 long long __maxReduction_impl(long long* d_gpu, int n, uint8_t* error)
 {

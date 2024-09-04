@@ -37,6 +37,20 @@ __global__ void softmaxImplFixedLongLong(long long *expA, long long* B, int n, l
     }
 }
 
+
+// softmax
+__global__ void softmaxImpl_fp64(double *expA, double* B, int n, double sumExp)
+{
+    int tid = threadIdx.x;
+    int i = blockIdx.x * blockDim.x + tid;
+
+    if (i < n)
+    {
+        B[i] = expA[i] / sumExp;
+    }
+}
+
+
 // relu activation
 __global__ void reluImplFixedLongLong(long long *A, long long* B, int m)
 {
@@ -63,6 +77,18 @@ __global__ void sigmoidImplFixedLongLong(long long *A, long long* B, int n)
     }
 }
 
+// sigmoid activation
+__global__ void sigmoidImpl_fp64(double *A, double* B, int n)
+{
+    int tid = threadIdx.x;
+    int i = blockIdx.x * blockDim.x + tid;
+
+    if (i < n)
+    {
+        B[i] = 1.0f / (exp(-A[i]) + 1.0f);
+    }
+}
+
 
 // tanh activation 
 __global__ void tanhImplFixedLongLong(long long *A, long long* B, int n)
@@ -76,6 +102,22 @@ __global__ void tanhImplFixedLongLong(long long *A, long long* B, int n)
         long long expAi = FixedLongLong::exp(A[i]);
         long long expNegAi = FixedLongLong::exp(-A[i]);
         B[i] = FixedLongLong::div(expAi - expNegAi, expAi + expNegAi);
+    }
+}
+
+
+// tanh activation 
+__global__ void tanhImpl_fp64(double *A, double* B, int n)
+{
+    int tid = threadIdx.x;
+    int i = blockIdx.x * blockDim.x + tid;
+
+
+    if (i < n)
+    {
+        double expAi = exp(A[i]);
+        double expNegAi = exp(-A[i]);
+        B[i] = (expAi - expNegAi) / (expAi + expNegAi);
     }
 }
 
@@ -205,6 +247,36 @@ __global__ void sumReduction_kernel(long long* d_gpu, long long* blockOutput, in
 
     if (tid == 0)
         blockOutput[blockIdx.x] = s_out[0];
+}
+
+
+__global__ void sumReduction_fp64_kernel(double* d_gpu, double* blockOutput, int n)
+{
+    const int tid = threadIdx.x;
+    const int glbl_tid = 2 * blockDim.x * blockIdx.x + tid;
+
+    extern __shared__ double fs_out[];
+
+    fs_out[tid] = 0;
+    fs_out[tid + blockDim.x] = 0;
+
+    if (glbl_tid < n)
+    {
+        fs_out[tid] = d_gpu[glbl_tid];
+        if (glbl_tid + blockDim.x < n)
+            fs_out[tid + blockDim.x] = d_gpu[glbl_tid + blockDim.x];
+    }
+    __syncthreads();
+
+    for (unsigned int s = blockDim.x; s > 0; s >>= 1) {
+        if (tid < s) {
+            fs_out[tid] += fs_out[tid + s];
+        }
+        __syncthreads();
+    }
+
+    if (tid == 0)
+        blockOutput[blockIdx.x] = fs_out[0];
 }
 
 __global__ void maxReduction_kernel(long long* d_gpu, long long* blockOutput, int n)
@@ -489,6 +561,31 @@ __global__ void mat_exp_fixed_longlong(long long *A, long long *B, int n) {
 
     if (x < n) {
         B[x] = FixedLongLong::exp(A[x]);
+    }
+}
+
+__global__ void mat_exp_fp64(double *A, double *B, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if (x < n) {
+        B[x] = exp(A[x]);
+    }
+}
+
+__global__ void cvt_fll2fp64(long long *A, double *B, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if (x < n) {
+        B[x] = 1.0f * A[x] / (1LL << 32);
+    }
+}
+
+
+__global__ void cvt_fp642fll(double *A, long long *B, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if (x < n) {
+        B[x] = (long long)(A[x] * (1LL << 32));
     }
 }
 
