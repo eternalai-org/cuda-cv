@@ -58,8 +58,18 @@ __global__ void sigmoidImplFixedLongLong(long long *A, long long* B, int n)
 
     if (i < n)
     {
-        long long expNegA = FixedLongLong::exp(-A[i]);
-        B[i] = FixedLongLong::reciprocal(expNegA + (1ll << 32));
+        if (A[i] < -20LL << 32)
+        {
+            B[i] = 0;
+        }
+        else if (A[i] > 20LL << 32)
+        {
+            B[i] = 1LL << 32;
+        }
+        else {
+            long long expNegA = FixedLongLong::exp(-A[i]);
+           B[i] = FixedLongLong::reciprocal(expNegA + (1ll << 32)); 
+        }
     }
 }
 
@@ -73,9 +83,19 @@ __global__ void tanhImplFixedLongLong(long long *A, long long* B, int n)
 
     if (i < n)
     {
-        long long expAi = FixedLongLong::exp(A[i]);
-        long long expNegAi = FixedLongLong::exp(-A[i]);
-        B[i] = FixedLongLong::div(expAi - expNegAi, expAi + expNegAi);
+        if (A[i] < -20LL << 32)
+        {
+            B[i] = (1LL << 32) * -1;
+        }
+        else if (A[i] > 20LL << 32)
+        {
+            B[i] = 1LL << 32;
+        }
+        else {
+            long long expAi = FixedLongLong::exp(A[i]);
+            long long expNegAi = FixedLongLong::exp(-A[i]);
+            B[i] = FixedLongLong::div(expAi - expNegAi, expAi + expNegAi);    
+        }
     }
 }
 

@@ -4,6 +4,12 @@
 // softmax interface
 void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error) 
 {
+    if (!m)
+    {
+        *error = 1;
+        return;
+    }
+
     long long *gpu;
     const int BLOCK_SIZE = 256;
     const int BLOCKS = (m + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -14,18 +20,15 @@ void __softmaxFixedLongLong(long long *A, long long* B, int m, uint8_t* error)
         cudaFree(gpu);
         return;
     }
-
-    mat_exp_fixed_longlong<<<BLOCKS, BLOCK_SIZE>>>(gpu, gpu + m, m);
-    long long sumExp = __sumReduction_impl(gpu + m, m, error);
+    
+    long long mx = __maxReduction_impl(gpu, m, error);
+    mat_sub_single_fixed_longlong<<<BLOCKS, BLOCK_SIZE>>>(gpu, gpu + m, mx, m);
+    mat_exp_fixed_longlong<<<BLOCKS, BLOCK_SIZE>>>(gpu + m, gpu, m);
+    long long sumExp = __sumReduction_impl(gpu, m, error);
 
     if (!*error && sumExp != 0) {
-        softmaxImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu + m, gpu, m, sumExp);
-        
-        if (*error = cuda_fmt_error(cudaMemcpy(B, gpu, sizeof(long long) * m, cudaMemcpyDeviceToHost)))
-        {
-            cudaFree(gpu);
-            return;
-        }        
+        softmaxImplFixedLongLong<<<BLOCKS, BLOCK_SIZE>>>(gpu, gpu + m, m, sumExp);
+        *error = cuda_fmt_error(cudaMemcpy(B, gpu + m, sizeof(long long) * m, cudaMemcpyDeviceToHost));
     }
 
     cudaFree(gpu);

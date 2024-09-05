@@ -6,7 +6,7 @@ def get_options():
     parser = ArgumentParser()    
     _list_names = list(list_names())
     parser.add_argument('--mode', type=str, default='test', choices=['test', 'benchmark'], help='Mode to run the tests', nargs='?')
-    parser.add_argument('--target', type=str, default=_list_names[0] if len(_list_names) > 0 else 'n/a', choices=_list_names, help='Name of the test to run', nargs='+')
+    parser.add_argument('--target', type=str, default=_list_names if len(_list_names) > 0 else 'n/a', choices=_list_names, help='Name of the test to run', nargs='+')
     parser.add_argument('-e', '--accepted-error', type=float, default=1e-6, help='Accepted error for the tests')
     return parser.parse_args()
 

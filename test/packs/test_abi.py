@@ -14,7 +14,7 @@ from .test_registry import wrap_test
 def run_abi_test_random_case(**_):
     sample = Tensor.random_tensor()
     tout, stats = execute(27, [], [sample])
-    error = absolute_or_relative_error(sample.data, tout.data)
+    error = absolute_or_relative_error(tout.data, sample.data).mean()
     stats['error'] = error
     return stats
 

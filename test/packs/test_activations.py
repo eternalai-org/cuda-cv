@@ -10,13 +10,17 @@ import time
     meta={
         'description': 'Test sigmoid activation function',
     },
-    params={'test_size': [(1 << i) for i in range(10, 16)]}
+    params={
+        'test_size': [(1 << i) for i in range(10, 16)],
+        'factor': [(1 << i) for i in range(1, 7)]
+    }
 )
-def test_sigmoid(test_size):
+def test_sigmoid(test_size, factor):
     sigmoid_opcode = Operation.SIGMOID
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= factor
 
     sigmoid_out , stats = execute(sigmoid_opcode, [], tin)    
     t_start = time.time()
@@ -36,13 +40,17 @@ def test_sigmoid(test_size):
     meta={
         'description': 'Test softmax activation function',
     },
-    params={'test_size': [(1 << i) for i in range(10, 16)]}
+    params={
+        'test_size': [(1 << i) for i in range(10, 16)],
+        'factor': [(1 << i) for i in range(1, 7)]   
+    }
 )
-def test_softmax(test_size):
+def test_softmax(test_size, factor):
     softmax_opcode = Operation.SOFTMAX
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= factor
 
     softmax_out , stats = execute(softmax_opcode, [], tin)    
     
@@ -62,13 +70,17 @@ def test_softmax(test_size):
     meta={
         'description': 'Test tanh activation function',
     },
-    params={'test_size': [(1 << i) for i in range(10, 16)]}
+    params={
+        'test_size': [(1 << i) for i in range(10, 16)],
+        'factor': [(1 << i) for i in range(1, 7)]    
+    }
 )
-def test_tanh(test_size):
+def test_tanh(test_size, factor):
     tanh_opcode = Operation.TANH
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= factor
 
     tanh_out , stats = execute(tanh_opcode, [], tin)    
     
@@ -88,13 +100,17 @@ def test_tanh(test_size):
     meta={
         'description': 'Test relu activation function',
     },
-    params={'test_size': [2 ** i for i in range(10, 16)]}
+    params={
+        'test_size': [2 ** i for i in range(10, 16)],
+        'factor': [2 ** i for i in range(1, 7)]
+    }
 )
-def test_relu(test_size):
+def test_relu(test_size, factor):
     relu_opcode = Operation.RELU
 
     tin = Tensor.random_tensor([test_size])
     tin._data += 0.5
+    tin._data *= factor
 
     relu_out , stats = execute(relu_opcode, [], tin)    
     

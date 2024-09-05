@@ -54,7 +54,7 @@ def run_tests(targets=[], **_):
 
     tests_results = []
     for i, (test_name, meta, fn, rp, params, checker) in enumerate(__test_fn_registry):
-        if test_name in targets:
+        if test_name not in targets:
             continue
         
         total_error, executed = 0, 0
@@ -98,7 +98,7 @@ def run_tests(targets=[], **_):
                     total_error += stats['error']
 
                     if i % 10 == 0:
-                        pstatus.update(stage=f'Test {test_name}', status=f'Avg error: {total_error / executed:.4f} ({executed}/{rp * len(p_combinations)})')
+                        pstatus.update(stage=f'Test {test_name}', status=f'Avg error: {total_error / executed:.8f} ({executed}/{rp * len(p_combinations)})')
 
         except KeyboardInterrupt:
             log('Interrupted')
