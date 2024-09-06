@@ -9,11 +9,11 @@ void globalAvgPoolingFixedLongLong_impl(
     , uint8_t* error
 )
 {
-    const int block_sz = 512;
-    const int block_sz2 = block_sz * 2;
-    const int grid_sz_x = (h * w + block_sz2 - 1) / block_sz2;
+    const int BLOCK_SZ = 256;
+    const int BLOCK_SZ2 = BLOCK_SZ * 2;
+    const int grid_sz_x = (h * w + BLOCK_SZ2 - 1) / BLOCK_SZ2;
 
-    long long* blockSum;
+    long long* blockSum = nullptr;
     
     if (*error = cuda_fmt_error(cudaMalloc(&blockSum, sizeof(long long) * grid_sz_x * in_channel)))
     {
@@ -23,24 +23,17 @@ void globalAvgPoolingFixedLongLong_impl(
 
     sumReductionV2_kernel<<<
         dim3(grid_sz_x, 1, in_channel), 
-        dim3(block_sz, 1, 1), 
-        sizeof(long long) * block_sz2>>>(
-        inp, blockSum, h * w, in_channel
-    );
+        dim3(BLOCK_SZ, 1, 1), 
+        sizeof(long long) * BLOCK_SZ2
+    >>>(inp, blockSum, h * w, in_channel);
 
     if (grid_sz_x > 1)
     {
-        globalAvgPoolingFixedLongLong_impl(
-            blockSum, out, grid_sz_x, 1, in_channel, error
-        );
+        globalAvgPoolingFixedLongLong_impl(blockSum, out, grid_sz_x, 1, in_channel, error);
     }
     else
     {
-        if (*error = cuda_fmt_error(cudaMemcpy(out, blockSum, in_channel * sizeof(long long), cudaMemcpyDeviceToDevice)))
-        {
-            cudaFree(blockSum);
-            return;
-        }
+        *error = cuda_fmt_error(cudaMemcpy(out, blockSum, in_channel * sizeof(long long), cudaMemcpyDeviceToDevice));
     }
 
     cudaFree(blockSum);    
@@ -283,7 +276,7 @@ void __globalAvgPoolingFixedLongLong(
     uint8_t* error
 )
 {
-    long long* gpu;
+    long long* gpu = nullptr;
 
     if (*error = cuda_fmt_error(cudaMalloc(&gpu, sizeof(long long) * (h * w * in_channel + in_channel))))
     {
@@ -299,19 +292,12 @@ void __globalAvgPoolingFixedLongLong(
 
     globalAvgPoolingFixedLongLong_impl(gpu + in_channel, gpu, h, w, in_channel, error);
 
-    if (*error = cuda_fmt_error(cudaMemcpy(out, gpu, in_channel * sizeof(long long), cudaMemcpyDeviceToHost)))
+    if (!*error)
     {
-        cudaFree(gpu);
-        return;
-    }
-
-    // assume the number of channel is not too large at the moment
-    for (int i = 0; i < in_channel; ++i)
-    {
-        out[i] = FixedLongLong::div(
-            out[i], 
-            (1LL * h * w ) << 32
-        );
+        // div and copy
+        const int BLOCK_SIZE = 256;
+        mat_div_single_fixed_longlong<<<(in_channel + BLOCK_SIZE -1) / BLOCK_SIZE, BLOCK_SIZE>>>(gpu, gpu + in_channel, (1LL * h * w) << 32, in_channel);
+        *error = cuda_fmt_error(cudaMemcpy(out, gpu + in_channel, in_channel * sizeof(long long), cudaMemcpyDeviceToHost));
     }
 
     cudaFree(gpu);

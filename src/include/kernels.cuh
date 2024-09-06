@@ -42,8 +42,8 @@ __global__ void sumReduction_kernel(long long* d_gpu, long long* blockOutput, in
 __global__ void sumReductionV2_kernel(long long* d_gpu, long long* blockOutput, int n, int c);
 __global__ void maxReduction_kernel(long long* d_gpu, long long* blockOutput, int n);
 __global__ void minReduction_kernel(long long* d_gpu, long long* blockOutput, int n);
-__global__ void minMaxScale_kernel(long long* d_gpu, long long min, long long max, int n);
-__global__ void zScore_kernel(long long* d_gpu, long long mean, long long std, int n);
+__global__ void minMaxScale_kernel(long long* d_gpu, long long* out, long long min, long long max, int n);
+__global__ void zScore_kernel(long long* d_gpu, long long* out, long long mean, long long std, int n);
 __global__ void maxPoolingImplFixedLongLong_kernel(
     long long* inp, long long* out,
     int in_h, int in_w, int in_channel,
@@ -65,11 +65,19 @@ __global__ void mat_sub_fixed_longlong(long long *A, long long *B, long long *C,
 __global__ void mat_mul_fixed_longlong(long long *A, long long *B, long long *C, int n);
 __global__ void mat_div_fixed_longlong(long long *A, long long *B, long long *C, int n);
 __global__ void mat_sqrt_fixed_longlong(long long *A, long long *B, int n);
+__global__ void mat_exp_fixed_longlong(long long *A, long long *B, int n);
 __global__ void conv2dImplFixedLongLong_kernel(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int kernel_size, int in_channel, int out_channel, // kernel properties
     int in_w, int in_h, int out_w, int out_h, // spatial size of inp,
     int padding, int stride_h, int stride_w // padding mode, one of 'valid': 0 or 'same': 1
 );
+
+__global__ void mat_add_single_fixed_longlong(long long *A, long long *B, long long e, int n);
+__global__ void mat_sub_single_fixed_longlong(long long *A, long long *B, long long e, int n);
+__global__ void mat_mul_single_fixed_longlong(long long *A, long long *B, long long e, int n);
+__global__ void mat_div_single_fixed_longlong(long long *A, long long *B, long long e, int n);
+
+__global__ void mat_pow2_single_fixed_longlong(long long *A, long long *B, int n);
 
 #endif // __CUDA_KERNELS_CUH__

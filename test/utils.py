@@ -28,7 +28,9 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 def tanh(x):
-    return np.tanh(x)
+    exp_x = np.exp(x)
+    exp_nx = np.exp(-x)
+    return (exp_x - exp_nx) / (exp_x + exp_nx)
 
 def softmax(x):
     e_x = np.exp(x - np.max(x))
@@ -47,5 +49,5 @@ def absolute_or_relative_error(a, b): # absolute or relative error
     return np.abs(a - b) / np.maximum(1.0, b)
 
 def log(*msg):
-    if 'BENCHMARK_LOGGING_SILENT' not in os.environ:
+    if 'benchmark' not in os.environ:
         print(*msg)

@@ -9,13 +9,14 @@
 #include <numeric>
 
 #if defined(LOGGING_DEBUG) || defined(LOGGING_VERBOSE)
-#define LOG_D(x) std::cerr << "[DEBUG][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
+#include <ctime>
+#define LOG_D(x) std::cerr << "[DEBUG]" << "[" << std::time(nullptr) << "][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
 #else
 #define LOG_D(x)
 #endif
 
 #if defined(LOGGING_VERBOSE)
-#define LOG_V(x) std::cerr << "[VERBOSE][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
+#define LOG_V(x) std::cerr << "[VERBOSE]" << "[" << std::time(nullptr) << "][" << __FILE__ << "][" << __LINE__ << "] msg: " << x << std::endl
 #else
 #define LOG_V(x)
 #endif
@@ -452,16 +453,64 @@ uint8_t* elementwise_div_call(const operation_pack& pack, int32_t* length_out, u
 
 uint8_t* transform_exp_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("transform_exp_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in transform_exp_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    
+    int64_t* out = new int64_t[n];
+    __matExpLongLong((long long*)pack.tensors[0].data(), (long long*)out, n, 1, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in transform_exp_call: error in __matExpLongLong");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* transform_sqrt_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("transform_sqrt_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+   if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in transform_sqrt: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    
+    int64_t* out = new int64_t[n];
+    __matSqrtLongLong((long long*)pack.tensors[0].data(), (long long*)out, n, 1, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in transform_sqrt: error in __matSqrtLongLong");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* batch_norm_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
@@ -538,16 +587,71 @@ uint8_t* layer_norm_call(const operation_pack& pack, int32_t* length_out, uint8_
 
 uint8_t* zscore_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("zscore_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in zscore_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+
+    long long eps = 0;
+
+    if (pack.params.size() > 0)
+    {
+        eps = pack.params[0];
+    }
+    
+    int64_t* out = new int64_t[n];
+    __zScore((long long*)pack.tensors[0].data(), (long long*)out, eps, n, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in zscore_call: error in zScore");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* min_max_scale_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
-    LOG_D("min_max_scale_call has not been implemented yet");
-    *_error = true;
-    return nullptr;
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in min_max_scale_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+    
+    int64_t* out = new int64_t[n];
+    __maxMinScale((long long*)pack.tensors[0].data(), (long long*)out, n, _error);
+
+    if (*_error)
+    {
+        LOG_D("Error in min_max_scale_call: error in zScore");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
 }
 
 uint8_t* concatenate_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
@@ -1047,6 +1151,48 @@ uint8_t* channel_wise_sum_reduction_call(const operation_pack& pack, int32_t* le
 }
 
 
+uint8_t* channel_wise_mean_reduction_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
+{
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in dropout_call: wrong number of tensors");
+        *_error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    uint64_t prod = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>());
+    uint64_t channel = inp.back();
+
+    int64_t* out = new int64_t[channel];
+    
+    __channelWiseSumReduction(
+        (long long*)pack.tensors[0].data(), 
+        (long long*)out, 
+        prod, 
+        channel, 
+        _error
+    );
+
+    if (*_error)
+    {
+        LOG_D("Error in channel_wise_sum_reduction_call: error in channelWiseSumReduction");
+        delete[] out;
+        return nullptr;
+    }
+
+    std::vector<uint64_t> shape_out = {channel};
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(shape_out, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
+}
+
+
 uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, uint8_t* _error)
 {
     if (pack.tensors.size() != 1)
@@ -1059,7 +1205,7 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
     const std::vector<uint64_t>& inp = pack.tensors[0].shape();
     
     int64_t prod = std::accumulate(inp.begin(), inp.end() - 1, 1, std::multiplies<int64_t>()); 
-    int64_t* buffer = new int64_t[prod];
+    int64_t* buffer = new int64_t[inp.back()];
 
     __globalAvgPoolingFixedLongLong(
         (long long*)pack.tensors[0].data(), 
@@ -1082,6 +1228,44 @@ uint8_t* globalavgpooling_call(const operation_pack& pack, int32_t* length_out, 
     );
 
     delete[] buffer;
+    return out_bytes;
+}
+
+uint8_t* rescale_call(const operation_pack& pack, int32_t* length_out, uint8_t* error)
+{
+    if (pack.tensors.size() != 1)
+    {
+        LOG_D("Error in rescale_call: wrong number of tensors");
+        *error = true;
+        return nullptr;
+    }
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape();
+    const int n = std::accumulate(inp.begin(), inp.end(), 1, std::multiplies<int64_t>());
+
+    int64_t* out = new int64_t[n];
+    // __rescale(
+    //     (long long*)pack.tensors[0].data(), 
+    //     (long long*)out, 
+    //     n, 
+    //     pack.params[0], 
+    //     pack.params[1], 
+    //     error
+    // );
+
+    if (*error)
+    {
+        LOG_D("Error in rescale_call: error in rescale");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper(inp, out), 
+        length_out
+    );
+
+    delete[] out;
     return out_bytes;
 }
 
@@ -1455,6 +1639,21 @@ const uint8_t* cuda_execute_operation(
     if (pack.op == opcode::GLOBAL_AVGPOOLING2D)
     {
         return wrap_return_fn(globalavgpooling_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::RESCALE)
+    {
+        return wrap_return_fn(rescale_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::CHANNEL_WISE_MEAN_REDUCTION) // 31
+    {
+        return wrap_return_fn(channel_wise_mean_reduction_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::CHANNEL_WISE_SUM_REDUCTION) // 31
+    {
+        return wrap_return_fn(channel_wise_sum_reduction_call(pack, length_out, _error));
     }
 
     return wrap_return_fn();

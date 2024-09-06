@@ -193,7 +193,7 @@ public:
     // this function is indeterministic
     inline __device__ __host__ long long exp(const long long& x)
     {
-        return (long long)(exp(1.0f * x / (1LL << 32)) * (1LL << 32));
+        return (long long)(expf(1.0f * x / (1LL << 32)) * (1LL << 32));
     }
 }
 

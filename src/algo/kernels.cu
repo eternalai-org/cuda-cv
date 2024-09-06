@@ -58,8 +58,18 @@ __global__ void sigmoidImplFixedLongLong(long long *A, long long* B, int n)
 
     if (i < n)
     {
-        long long expNegA = FixedLongLong::exp(-A[i]);
-        B[i] = FixedLongLong::reciprocal(expNegA + (1ll << 32));
+        if (A[i] < -20LL << 32)
+        {
+            B[i] = 0;
+        }
+        else if (A[i] > 20LL << 32)
+        {
+            B[i] = 1LL << 32;
+        }
+        else {
+            long long expNegA = FixedLongLong::exp(-A[i]);
+           B[i] = FixedLongLong::reciprocal(expNegA + (1ll << 32)); 
+        }
     }
 }
 
@@ -73,10 +83,19 @@ __global__ void tanhImplFixedLongLong(long long *A, long long* B, int n)
 
     if (i < n)
     {
-        long long expAi = FixedLongLong::exp(A[i]);
-        long long expNegAi = FixedLongLong::exp(-A[i]);
-
-        B[i] = FixedLongLong::div(expAi - expNegAi, expAi + expNegAi);
+        if (A[i] < -20LL << 32)
+        {
+            B[i] = (1LL << 32) * -1;
+        }
+        else if (A[i] > 20LL << 32)
+        {
+            B[i] = 1LL << 32;
+        }
+        else {
+            long long expAi = FixedLongLong::exp(A[i]);
+            long long expNegAi = FixedLongLong::exp(-A[i]);
+            B[i] = FixedLongLong::div(expAi - expNegAi, expAi + expNegAi);    
+        }
     }
 }
 
@@ -215,8 +234,8 @@ __global__ void maxReduction_kernel(long long* d_gpu, long long* blockOutput, in
 
     extern __shared__ long long s_out[];
 
-    s_out[tid] = 0;
-    s_out[tid + blockDim.x] = 0;
+    s_out[tid] = d_gpu[0];
+    s_out[tid + blockDim.x] = d_gpu[0];
 
     if (glbl_tid < n)
     {
@@ -266,25 +285,25 @@ __global__ void minReduction_kernel(long long* d_gpu, long long* blockOutput, in
         blockOutput[blockIdx.x] = s_out[0];
 }
 
-__global__ void minMaxScale_kernel(long long* d_gpu, long long min, long long max, int n)
+__global__ void minMaxScale_kernel(long long* d_gpu, long long* out, long long min, long long max, int n)
 {
     const int tid = threadIdx.x;
     const int glbl_tid = blockDim.x * blockIdx.x + tid;
 
     if (glbl_tid < n)
     {
-        d_gpu[glbl_tid] = FixedLongLong::div(d_gpu[glbl_tid] - min, max - min);
+        out[glbl_tid] = FixedLongLong::div(d_gpu[glbl_tid] - min, max - min);
     }
 }
 
-__global__ void zScore_kernel(long long* d_gpu, long long mean, long long std, int n)
+__global__ void zScore_kernel(long long* d_gpu, long long* out, long long mean, long long std, int n)
 {
     const int tid = threadIdx.x;
     const int glbl_tid = blockDim.x * blockIdx.x + tid;
 
     if (glbl_tid < n)
     {
-        d_gpu[glbl_tid] = FixedLongLong::div(d_gpu[glbl_tid] - mean, std);
+        out[glbl_tid] = FixedLongLong::div(d_gpu[glbl_tid] - mean, std);
     }
 }
 
@@ -434,11 +453,62 @@ __global__ void mat_div_fixed_longlong(long long *A, long long *B, long long *C,
     }
 }
 
+
+
+__global__ void mat_add_single_fixed_longlong(long long *A, long long *B, long long e, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x; 
+
+    if(x < n) {
+        B[x] = A[x] + e;
+    }
+}
+
+__global__ void mat_sub_single_fixed_longlong(long long *A, long long *B, long long e, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x; 	// Row address
+
+    if(x < n) {
+        B[x] = A[x] - e;
+    }
+}
+
+__global__ void mat_mul_single_fixed_longlong(long long *A, long long *B, long long e, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if(x < n) {
+        B[x] = FixedLongLong::mul(A[x], e);
+    }
+}
+
+__global__ void mat_pow2_single_fixed_longlong(long long *A, long long *B, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if(x < n) {
+        B[x] = FixedLongLong::mul(A[x], A[x]);
+    }
+}
+
+
+__global__ void mat_div_single_fixed_longlong(long long *A, long long *B, long long e, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if(x < n && B[x] != 0) {
+        B[x] = FixedLongLong::div(A[x], e);
+    }
+}
+
 __global__ void mat_sqrt_fixed_longlong(long long *A, long long *B, int n) {
     int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
 
-    if(x < n && A[x] >= 0) {
+    if(x < n) {
         B[x] = FixedLongLong::sqrt(A[x]);
+    }
+}
+
+__global__ void mat_exp_fixed_longlong(long long *A, long long *B, int n) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;	// Column Address
+
+    if (x < n) {
+        B[x] = FixedLongLong::exp(A[x]);
     }
 }
 

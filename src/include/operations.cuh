@@ -6,6 +6,13 @@
 #include <fixedlonglong32x32.cuh>
 #include <kernels.cuh>
 
+void __channelWiseSumReduction_impl(long long* d_gpu, long long* d_out, int n, int c, uint8_t* error);
+long long __sumReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __maxReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __minReduction_impl(long long* d_gpu, int n, uint8_t* error);
+long long __meanReduction_impl(long long* gpu_inp, int n, uint8_t* error);
+long long __stdReduction_impl(long long* d_gpu, int n, uint8_t* error);
+
 // matrix mutiplications
 void __maxmulFixedLongLong(long long *A, long long *B, long long *C, int m, int n, int k, uint8_t* error);
 void __maxmulFloat(float *A, float *B, float *C, int m, int n, int k, uint8_t* error);
@@ -27,20 +34,19 @@ void __matSubLongLong(long long *A, long long *B, long long *C, int m, int n, ui
 void __matMulLongLong(long long *A, long long *B, long long *C, int m, int n, uint8_t* error);
 void __matDivLongLong(long long *A, long long *B, long long *C, int m, int n , uint8_t* error);
 void __matSqrtLongLong(long long *A, long long *B, int m, int n, uint8_t* error);
+void __matExpLongLong(long long *A, long long *B, int m, int n, uint8_t* error);
 
 // conv2d operations
 void __conv2dFixedLongLong(long long* inp, long long* kernel, long long* bias, long long* out, int kernel_size, int in_channel, int out_channel, int h, int w, int padding, int stride_h, int stride_w, uint8_t* error);
 
 // pooling operations
 void __avgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding, uint8_t* error);
-void __maxPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding, uint8_t* error
-);
+void __maxPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, int pool_size, int stride_h, int stride_w, int padding, uint8_t* error);
 void __globalAvgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel, uint8_t* error);
 
 
 // reduction
 long long __sumReduction(long long* inp, int n, uint8_t* error);
-long long __avgReduction(long long* inp, int n, uint8_t* error);
 long long __maxReduction(long long* inp, int n, uint8_t* error);
 long long __minReduction(long long* inp, int n, uint8_t* error);
 long long __meanReduction(long long* inp, int n, uint8_t* error);
@@ -110,7 +116,6 @@ uint8_t estimatePoolingOutputSize(int h, int w, int in_channel, int pool_size, i
 uint8_t globalAvgPoolingFixedLongLong(long long* inp, long long* out, int h, int w, int in_channel);
 
 uint8_t sumReduction(long long* inp, int n, long long* res);
-uint8_t avgReduction(long long* inp, int n, long long* res);
 uint8_t maxReduction(long long* inp, int n, long long* res);
 uint8_t minReduction(long long* inp, int n, long long* res);
 uint8_t meanReduction(long long* inp, int n, long long* res);
