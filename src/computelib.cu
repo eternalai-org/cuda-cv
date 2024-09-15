@@ -1269,6 +1269,12 @@ uint8_t* rescale_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     return out_bytes;
 }
 
+uint8_t* depthwise_conv2d_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror)
+{
+
+}
+
+
 
 int64_t read_opcode(const int64_t* data, uint8_t *__error)
 {
