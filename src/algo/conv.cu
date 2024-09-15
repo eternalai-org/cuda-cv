@@ -128,7 +128,7 @@ void __conv2dFixedLongLong(
     cudaFree(d_gpu);
 }
 
-uint8_t __depthwiseConv2dFixedLongLong(
+void __depthwiseConv2dFixedLongLong(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int h, int w, int in_channel, // spatial size of inp,
     int kernel_size_h, int kernel_size_w,  // kernel properties

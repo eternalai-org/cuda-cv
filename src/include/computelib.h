@@ -66,7 +66,8 @@ enum opcode
     // batch 2 operations
     RESCALE = 29, // 29
     CHANNEL_WISE_MEAN_REDUCTION = 30, // 30    
-    CHANNEL_WISE_SUM_REDUCTION = 31, // 31   
+    CHANNEL_WISE_SUM_REDUCTION = 31, // 31
+    DEPTHWISE_CONV2D = 32 // 31
 };
 
 // abi operations

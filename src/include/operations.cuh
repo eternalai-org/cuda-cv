@@ -86,6 +86,13 @@ void __batchNormalizeFixedLongLong(
     uint8_t* error
 );
 
+void __depthwiseConv2dFixedLongLong(
+    long long* inp, long long* kernel, long long* bias, long long* out, // data io
+    int h, int w, int in_channel, // spatial size of inp,
+    int kernel_size_h, int kernel_size_w,  // kernel properties
+    int padding, int stride_h, int stride_w // padding: same(0) or valid(1)
+);
+
 #if __cplusplus
 extern "C" {
 #endif
