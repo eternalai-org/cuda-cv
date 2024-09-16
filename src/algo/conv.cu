@@ -204,18 +204,12 @@ void __depthwiseConv2dFixedLongLong(
         }   
     }
     
-    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize, kernel, kernelFlatSize * sizeof(long long), cudaMemcpyHostToDevice)))
+    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize, kernel, kernelFlatSize * sizeof(long long), cudaMemcpyHostToDevice)) 
+    || cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize + kernelFlatSize, bias, in_channel * sizeof(long long), cudaMemcpyHostToDevice)))
     {
         cudaFree(d_gpu);
         return;
     }
-    
-    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize + kernelFlatSize, bias, in_channel * sizeof(long long), cudaMemcpyHostToDevice)))
-    {
-        cudaFree(d_gpu);
-        return;
-    }
-
 
     const int BLOCK_SIZE = 32;
     const dim3 THREAD_PER_BLOCK(BLOCK_SIZE, BLOCK_SIZE, 1);
@@ -226,9 +220,9 @@ void __depthwiseConv2dFixedLongLong(
         d_gpu + inpFlatSize, // kernel 
         d_gpu + inpFlatSize + kernelFlatSize, // bias 
         d_gpu + inpFlatSize + kernelFlatSize + in_channel, // out 
-        w + pad_left + pad_right, h + pad_top + pad_bottom,  in_channel, 
+        h + pad_top + pad_bottom,  w + pad_left + pad_right, in_channel, 
         kernel_size_h, kernel_size_w,
-        out_w, out_h, 
+        out_h, out_w, 
         padding, stride_h, stride_w
     );
 
@@ -269,6 +263,8 @@ uint8_t estimateConvOutputSize(
 
     *out_w = (w + pad_left + pad_right - kernel_size) / stride_w + 1;
     *out_h = (h + pad_top + pad_bottom - kernel_size) / stride_h + 1;
+
+    printf("out_w %d; out_h: %d\n", *out_w, *out_h);
 
     return OK;
 }

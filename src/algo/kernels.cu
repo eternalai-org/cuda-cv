@@ -557,8 +557,9 @@ __global__ void conv2dImplFixedLongLong_kernel(
 
 __global__ void depthwise_conv2d_kernel(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
-    int in_w, int in_h, int in_channel, int kernel_size_h, int kernel_size_w, // kernel properties
-    int out_w, int out_h, // spatial size of inp,
+    int in_h, int in_w, int in_channel, 
+    int kernel_size_h, int kernel_size_w, // kernel properties
+    int out_h, int out_w, // spatial size of output,
     int padding, int stride_h, int stride_w // padding mode, one of 'valid': 0 or 'same': 1
 )
 {
@@ -577,7 +578,7 @@ __global__ void depthwise_conv2d_kernel(
             for (int j = 0; j < kernel_size_w; ++j)
             {
                 res += FixedLongLong::mul(
-                    inp[(in_row_offset + i) * in_w + in_col_offset + j],
+                    inp[((in_row_offset + i) * in_w + in_col_offset + j) * in_channel + out_c],
                     kernel[(i * kernel_size_w + j) * in_channel + out_c]
                 );
             }

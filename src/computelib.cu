@@ -1278,6 +1278,8 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, int32_t* length_out, 
         return nullptr;
     }
 
+    LOG_D("tensors " << pack.tensors.size());
+
     const std::vector<uint64_t>& inp = pack.tensors[0].shape(),
                                  weight = pack.tensors[1].shape(),
                                  bias = pack.tensors[2].shape();
@@ -1288,7 +1290,7 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, int32_t* length_out, 
 
     int c_in = inp.back();
     int h_in, w_in;
-    uint64_t h_out, w_out;
+    uint64_t h_out = 0, w_out = 0;
 
     if (inp.size() == 4 && inp[0] == 1)
     {
@@ -1305,9 +1307,11 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, int32_t* length_out, 
         return nullptr;
     }
 
+    LOG_D("check 1");
+
     int kh, kw, stride_h, stride_w, padding;
 
-    if (((weight.size() == 4 && weight.back() == 1) || (weight.size() == 3)) 
+    if (((weight.size() == 4 && weight.back() == 1) || weight.size() == 3) 
         && bias.size() == 1 
         && bias.back() == c_in
         && weight[2] == c_in
@@ -1323,6 +1327,8 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, int32_t* length_out, 
         return nullptr;
     }
 
+    LOG_D("check 2");
+
     if (pack.params.size() >= 3)
     {
         stride_h = pack.params[0];
@@ -1336,19 +1342,23 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, int32_t* length_out, 
         return nullptr;
     }
 
-    if (!estimateConvOutputSize(
+    LOG_D("check 2.5 " << kh << " " << c_in << " " << c_in << " "
+        << h_in << " " << w_in << " " << 
+        padding << " " << stride_h << " " << stride_w);
+
+
+    estimateConvOutputSize(
         kh, c_in, c_in, 
         h_in, w_in, 
         padding, stride_h, stride_w, 
-        (int*) &h_out, (int*) &w_out)
-    )
-    {
-        LOG_D("Error in depthwise_conv2d_call: error in estimateConvOutputSize");
-        *error = true;
-        return nullptr;
-    }
+        (int*) &h_out, (int*) &w_out
+    );
 
+    LOG_D("check 3 " << h_out << " " << w_out << " " << c_in);
     int64_t* out = new int64_t[h_out * w_out * c_in];
+    
+    LOG_D("h_out: " << h_out << " w_out: " << w_out << " c_out: " << c_in);
+
     __depthwiseConv2dFixedLongLong(
         (long long*)pack.tensors[0].data(), 
         (long long*)pack.tensors[1].data(), 
@@ -1749,12 +1759,12 @@ const uint8_t* cuda_execute_operation(
         return wrap_return_fn(globalavgpooling_call(pack, length_out, _error));
     }
 
-    if (pack.op == opcode::RESCALE)
+    if (pack.op == opcode::RESCALE) // 29
     {
         return wrap_return_fn(rescale_call(pack, length_out, _error));
     }
 
-    if (pack.op == opcode::CHANNEL_WISE_MEAN_REDUCTION) // 31
+    if (pack.op == opcode::CHANNEL_WISE_MEAN_REDUCTION) // 30
     {
         return wrap_return_fn(channel_wise_mean_reduction_call(pack, length_out, _error));
     }

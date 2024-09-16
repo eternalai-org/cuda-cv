@@ -100,7 +100,7 @@ def test_deothwise_correct_conv2d(
     padding_i = 1 if padding == 'same' else 0
     
     random_kernel = Tensor.random_tensor((ksize, ksize, channel_in))
-    random_bias = Tensor.random_tensor((channel_in,))
+    random_bias = Tensor.zeros_tensor((channel_in,))
 
     params = [stride, stride, padding_i]
     
