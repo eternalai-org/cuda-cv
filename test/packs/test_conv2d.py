@@ -8,11 +8,12 @@ from .test_registry import wrap_test
 def check_conv2d_constraint(
     spatial_size, 
     channel_in, 
-    channel_out, 
     ksize, 
     stride, 
-    padding
+    padding,
+    channel_out = None 
 ):
+    channel_out = channel_out or channel_in
     return all([
         all([x > 0 for x in [spatial_size, channel_in, channel_out, ksize, stride]]),
         ksize <= spatial_size,
@@ -108,10 +109,11 @@ def test_deothwise_correct_conv2d(
         strides=(stride, stride), 
         padding=padding
     )
-    depthwise_conv2d.build(t.data.reshape(1, *t.shape).shape)    
-    depthwise_conv2d.set_weights([random_kernel.data.reshape(random_kernel.shape), random_bias.data.reshape(random_bias.shape)])
 
-    conv2d_out , stats = execute(Operation.CONV2D, params, [t, random_kernel, random_bias])
+    depthwise_conv2d.build(t.data.reshape(1, *t.shape).shape)    
+    depthwise_conv2d.set_weights([random_kernel.data.reshape([*random_kernel.shape, 1]), random_bias.data.reshape(random_bias.shape)])
+
+    conv2d_out , stats = execute(Operation.DEPTHWISE_CONV2D, params, [t, random_kernel, random_bias])
 
     t_start = time.time()
     expected_conv2d = depthwise_conv2d(t.data.reshape(1, *t.shape)).numpy().flatten()

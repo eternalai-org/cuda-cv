@@ -132,7 +132,8 @@ void __depthwiseConv2dFixedLongLong(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int h, int w, int in_channel, // spatial size of inp,
     int kernel_size_h, int kernel_size_w,  // kernel properties
-    int padding, int stride_h, int stride_w // padding: same(0) or valid(1)
+    int padding, int stride_h, int stride_w, // padding: same(0) or valid(1)
+    uint8_t* error
 )
 {
     int pad_top = 0, pad_bottom = 0, pad_left = 0, pad_right = 0;
@@ -142,8 +143,8 @@ void __depthwiseConv2dFixedLongLong(
         int out_h = (h + stride_h - 1) / stride_h;
         int out_w = (w + stride_w - 1) / stride_w;
 
-        int pad_h = max((out_h - 1) * stride_h + kernel_size - h, 0);
-        int pad_w = max((out_w - 1) * stride_w + kernel_size - w, 0);
+        int pad_h = max((out_h - 1) * stride_h + kernel_size_h - h, 0);
+        int pad_w = max((out_w - 1) * stride_w + kernel_size_w - w, 0);
 
         pad_top = pad_h / 2;
         pad_bottom = pad_h - pad_top;
@@ -154,11 +155,11 @@ void __depthwiseConv2dFixedLongLong(
 
     long long *d_gpu;
 
-    const int out_w = (w + pad_left + pad_right - kernel_size) / stride_w + 1;
-    const int out_h = (h + pad_top + pad_bottom - kernel_size) / stride_h + 1;
+    const int out_w = (w + pad_left + pad_right - kernel_size_w) / stride_w + 1;
+    const int out_h = (h + pad_top + pad_bottom - kernel_size_h) / stride_h + 1;
 
     const uint64_t inpFlatSize = (w + pad_left + pad_right) * (h + pad_top + pad_bottom) * in_channel;
-    const uint64_t kernelFlatSize = in_channel * kernel_size * kernel_size; // * 1
+    const uint64_t kernelFlatSize = in_channel * kernel_size_h * kernel_size_w; // * 1
     const uint64_t outFlatSize = out_h * out_w *  in_channel;
     const uint64_t cudaMemSize = inpFlatSize + outFlatSize + kernelFlatSize + in_channel;
 
@@ -209,7 +210,7 @@ void __depthwiseConv2dFixedLongLong(
         return;
     }
     
-    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize + kernelFlatSize, bias, out_channel * sizeof(long long), cudaMemcpyHostToDevice)))
+    if (*error = cuda_fmt_error(cudaMemcpy(d_gpu + inpFlatSize + kernelFlatSize, bias, in_channel * sizeof(long long), cudaMemcpyHostToDevice)))
     {
         cudaFree(d_gpu);
         return;
@@ -226,13 +227,13 @@ void __depthwiseConv2dFixedLongLong(
         d_gpu + inpFlatSize + kernelFlatSize, // bias 
         d_gpu + inpFlatSize + kernelFlatSize + in_channel, // out 
         w + pad_left + pad_right, h + pad_top + pad_bottom,  in_channel, 
-        kernel_size, kernel_size,
+        kernel_size_h, kernel_size_w,
         out_w, out_h, 
         padding, stride_h, stride_w
     );
 
     *error = cuda_fmt_error(cudaMemcpy(out, d_gpu + inpFlatSize + kernelFlatSize + in_channel,
-        out_h * out_w * in_channel, * sizeof(long long), cudaMemcpyDeviceToHost));
+        out_h * out_w * in_channel * sizeof(long long), cudaMemcpyDeviceToHost));
 
     cudaFree(d_gpu);
 }

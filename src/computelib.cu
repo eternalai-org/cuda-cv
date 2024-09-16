@@ -1269,7 +1269,7 @@ uint8_t* rescale_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     return out_bytes;
 }
 
-uint8_t* depthwise_conv2d_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror)
+uint8_t* depthwise_conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* error)
 {
     if (pack.tensors.size() != 3) // inp, weight, bias
     {
@@ -1286,12 +1286,28 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, uint32_t* length_out,
     // weight: kh, kw, c, 1 
     // bias: 1, 1, c, 1
 
-    int in_c = inp.back();
-    int out_h, out_w;
+    int c_in = inp.back();
+    int h_in, w_in;
+    uint64_t h_out, w_out;
+
+    if (inp.size() == 4 && inp[0] == 1)
+    {
+        h_in = inp[1], w_in = inp[2];
+    }
+    else if (inp.size() == 3)
+    {
+        h_in = inp[0], w_in = inp[1];
+    }
+    else 
+    {
+        LOG_D("Error in depthwise_conv2d_call: wrong input shape. support only batch size = 1 or no batch dim input");
+        *error = true;
+        return nullptr;
+    }
 
     int kh, kw, stride_h, stride_w, padding;
 
-    if (((weight.shape == 4 && weight.back() == 1) || (weight.shape == 3)) 
+    if (((weight.size() == 4 && weight.back() == 1) || (weight.size() == 3)) 
         && bias.size() == 1 
         && bias.back() == c_in
         && weight[2] == c_in
@@ -1340,9 +1356,8 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, uint32_t* length_out,
         (long long*)out, 
         h_in, w_in, c_in, 
         kh, kw, 
-        h_out, w_out, 
         padding, stride_h, stride_w, 
-        _error
+        error
     );
 
     if (*error)
@@ -1353,7 +1368,7 @@ uint8_t* depthwise_conv2d_call(const operation_pack& pack, uint32_t* length_out,
     }
 
     uint8_t* out_bytes = abi_encode_tensor(
-        TensorWrapper({h_out, w_out, c_in}, out), 
+        TensorWrapper({h_out, w_out, (uint64_t) c_in}, out), 
         length_out
     );
 

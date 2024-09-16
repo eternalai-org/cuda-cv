@@ -555,7 +555,7 @@ __global__ void conv2dImplFixedLongLong_kernel(
     }
 }
 
-__global__ depthwise_conv2d_kernel(
+__global__ void depthwise_conv2d_kernel(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int in_w, int in_h, int in_channel, int kernel_size_h, int kernel_size_w, // kernel properties
     int out_w, int out_h, // spatial size of inp,

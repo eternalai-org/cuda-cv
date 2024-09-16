@@ -80,7 +80,7 @@ __global__ void mat_div_single_fixed_longlong(long long *A, long long *B, long l
 
 __global__ void mat_pow2_single_fixed_longlong(long long *A, long long *B, int n);
 
-__global__ depthwise_conv2d_kernel(
+__global__ void depthwise_conv2d_kernel(
     long long* inp, long long* kernel, long long* bias, long long* out, // data io
     int in_h, int in_w, int in_channel, 
     int kernel_size_h, int kernel_size_w, // kernel properties

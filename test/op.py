@@ -51,6 +51,11 @@ class Operation(int, Enum):
     DROPOUT = 27, # 27
     GLOBAL_AVGPOOLING2D = 28 # 28
     
+    RESCALE = 29, # 29
+    CHANNEL_WISE_MEAN_REDUCTION = 30, # 30    
+    CHANNEL_WISE_SUM_REDUCTION = 31, # 31   
+    DEPTHWISE_CONV2D = 32
+    
 from eth_abi import encode as abi_encode, decode as abi_decode
 import ctypes
 import os
