@@ -12,7 +12,7 @@ else
 	CPP_SYMBOLS=-DNDEBUG
 endif 
 
-CPP_SYMBOLS=-DLOGGING_DEBUG -DLOGGING_VERBOSE
+# CPP_SYMBOLS=-DLOGGING_DEBUG -DLOGGING_VERBOSE
 
 kernels.o: algo/kernels.cu
 	nvcc --compiler-options -fPIC -c -o kernels.o  algo/kernels.cu \

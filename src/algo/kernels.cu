@@ -554,3 +554,36 @@ __global__ void conv2dImplFixedLongLong_kernel(
         out[(out_row * out_w + out_col) * out_channel + out_c] = sum;
     }
 }
+
+__global__ void depthwise_conv2d_kernel(
+    long long* inp, long long* kernel, long long* bias, long long* out, // data io
+    int in_h, int in_w, int in_channel, 
+    int kernel_size_h, int kernel_size_w, // kernel properties
+    int out_h, int out_w, // spatial size of output,
+    int padding, int stride_h, int stride_w // padding mode, one of 'valid': 0 or 'same': 1
+)
+{
+    int out_row = blockIdx.y * blockDim.y + threadIdx.y; 
+    int out_col = blockIdx.x * blockDim.x + threadIdx.x;
+    int out_c = blockIdx.z * blockDim.z + threadIdx.z;
+
+    if (out_row < out_h && out_col < out_w)
+    {
+        const int in_row_offset = out_row * stride_h;
+        const int in_col_offset = out_col * stride_w;
+        long long res = bias[out_c];
+
+        for (int i = 0; i < kernel_size_h; ++i)
+        {
+            for (int j = 0; j < kernel_size_w; ++j)
+            {
+                res += FixedLongLong::mul(
+                    inp[((in_row_offset + i) * in_w + in_col_offset + j) * in_channel + out_c],
+                    kernel[(i * kernel_size_w + j) * in_channel + out_c]
+                );
+            }
+        }
+
+        out[(out_row * out_w + out_col) * in_channel + out_c] = res;
+    }
+}

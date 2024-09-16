@@ -66,7 +66,8 @@ enum opcode
     // batch 2 operations
     RESCALE = 29, // 29
     CHANNEL_WISE_MEAN_REDUCTION = 30, // 30    
-    CHANNEL_WISE_SUM_REDUCTION = 31, // 31   
+    CHANNEL_WISE_SUM_REDUCTION = 31, // 31
+    DEPTHWISE_CONV2D = 32 // 31
 };
 
 // abi operations
@@ -103,6 +104,7 @@ uint8_t* reduction_argmin_call(const operation_pack& pack, uint32_t* length_out,
 uint8_t* dropout_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
 uint8_t* globalavgpooling_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
 uint8_t* rescale_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
+uint8_t* depthwise_conv2d_call(const operation_pack& pack, uint32_t* length_out, uint8_t* eerror);
 
 uint8_t* _execute(
     uint8_t* payload_in, // bytes: opcode, params, shapes, tensors

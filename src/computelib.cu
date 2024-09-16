@@ -1269,6 +1269,124 @@ uint8_t* rescale_call(const operation_pack& pack, int32_t* length_out, uint8_t* 
     return out_bytes;
 }
 
+uint8_t* depthwise_conv2d_call(const operation_pack& pack, int32_t* length_out, uint8_t* error)
+{
+    if (pack.tensors.size() != 3) // inp, weight, bias
+    {
+        LOG_D("Error in depthwise_conv2d_call: wrong number of tensors");
+        *error = true;
+        return nullptr;
+    }
+
+    LOG_D("tensors " << pack.tensors.size());
+
+    const std::vector<uint64_t>& inp = pack.tensors[0].shape(),
+                                 weight = pack.tensors[1].shape(),
+                                 bias = pack.tensors[2].shape();
+
+    // inp: h, w, c
+    // weight: kh, kw, c, 1 
+    // bias: 1, 1, c, 1
+
+    int c_in = inp.back();
+    int h_in, w_in;
+    uint64_t h_out = 0, w_out = 0;
+
+    if (inp.size() == 4 && inp[0] == 1)
+    {
+        h_in = inp[1], w_in = inp[2];
+    }
+    else if (inp.size() == 3)
+    {
+        h_in = inp[0], w_in = inp[1];
+    }
+    else 
+    {
+        LOG_D("Error in depthwise_conv2d_call: wrong input shape. support only batch size = 1 or no batch dim input");
+        *error = true;
+        return nullptr;
+    }
+
+    LOG_D("check 1");
+
+    int kh, kw, stride_h, stride_w, padding;
+
+    if (((weight.size() == 4 && weight.back() == 1) || weight.size() == 3) 
+        && bias.size() == 1 
+        && bias.back() == c_in
+        && weight[2] == c_in
+    )
+    {
+        kh = weight[0];
+        kw = weight[1];
+    }
+    else 
+    {
+        LOG_D("Error in depthwise_conv2d_call: wrong weight shape");
+        *error = true;
+        return nullptr;
+    }
+
+    LOG_D("check 2");
+
+    if (pack.params.size() >= 3)
+    {
+        stride_h = pack.params[0];
+        stride_w = pack.params[1];
+        padding = pack.params[2];
+    }
+    else
+    {
+        LOG_D("Error in depthwise_conv2d_call: missing params");
+        *error = true;
+        return nullptr;
+    }
+
+    LOG_D("check 2.5 " << kh << " " << c_in << " " << c_in << " "
+        << h_in << " " << w_in << " " << 
+        padding << " " << stride_h << " " << stride_w);
+
+
+    estimateConvOutputSize(
+        kh, c_in, c_in, 
+        h_in, w_in, 
+        padding, stride_h, stride_w, 
+        (int*) &h_out, (int*) &w_out
+    );
+
+    LOG_D("check 3 " << h_out << " " << w_out << " " << c_in);
+    int64_t* out = new int64_t[h_out * w_out * c_in];
+    
+    LOG_D("h_out: " << h_out << " w_out: " << w_out << " c_out: " << c_in);
+
+    __depthwiseConv2dFixedLongLong(
+        (long long*)pack.tensors[0].data(), 
+        (long long*)pack.tensors[1].data(), 
+        (long long*)pack.tensors[2].data(), 
+        (long long*)out, 
+        h_in, w_in, c_in, 
+        kh, kw, 
+        padding, stride_h, stride_w, 
+        error
+    );
+
+    if (*error)
+    {
+        LOG_D("Error in depthwise_conv2d_call: error in depthwiseConv2dFixedLongLong");
+        delete[] out;
+        return nullptr;
+    }
+
+    uint8_t* out_bytes = abi_encode_tensor(
+        TensorWrapper({h_out, w_out, (uint64_t) c_in}, out), 
+        length_out
+    );
+
+    delete[] out;
+    return out_bytes;
+}
+
+
 
 int64_t read_opcode(const int64_t* data, uint8_t *__error)
 {
@@ -1641,12 +1759,12 @@ const uint8_t* cuda_execute_operation(
         return wrap_return_fn(globalavgpooling_call(pack, length_out, _error));
     }
 
-    if (pack.op == opcode::RESCALE)
+    if (pack.op == opcode::RESCALE) // 29
     {
         return wrap_return_fn(rescale_call(pack, length_out, _error));
     }
 
-    if (pack.op == opcode::CHANNEL_WISE_MEAN_REDUCTION) // 31
+    if (pack.op == opcode::CHANNEL_WISE_MEAN_REDUCTION) // 30
     {
         return wrap_return_fn(channel_wise_mean_reduction_call(pack, length_out, _error));
     }
@@ -1654,6 +1772,11 @@ const uint8_t* cuda_execute_operation(
     if (pack.op == opcode::CHANNEL_WISE_SUM_REDUCTION) // 31
     {
         return wrap_return_fn(channel_wise_sum_reduction_call(pack, length_out, _error));
+    }
+
+    if (pack.op == opcode::DEPTHWISE_CONV2D) // 32
+    {
+        return wrap_return_fn(depthwise_conv2d_call(pack, length_out, _error));
     }
 
     return wrap_return_fn();
